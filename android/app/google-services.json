@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "714889229298",
+    "firebase_url": "https://txapita.firebaseio.com",
+    "project_id": "txapita",
+    "storage_bucket": "txapita.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714889229298:android:3e52723d42ff0599",
+        "android_client_info": {
+          "package_name": "com.santosenoque.txapita"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "714889229298-68ocrfjce7sp907m7jlri1lpdamejga1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.santosenoque.txapita",
+            "certificate_hash": "d1de65707c7ebcf4d8e50a8d1f0c507a286c740d"
+          }
+        },
+        {
+          "client_id": "714889229298-3tnfphvrqi8sk0s1un2jk9okaqkmm4sh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsc3V5aFafMBPvMkg6x6BEkQtFR8NSLjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "714889229298-3tnfphvrqi8sk0s1un2jk9okaqkmm4sh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
