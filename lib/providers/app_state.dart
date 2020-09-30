@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:txapita/requests/map_requests.dart';
+import 'package:location/location.dart';
+import 'package:txapita/helpers/style.dart';
+import 'package:txapita/models/route.dart';
+import 'package:txapita/services/map_requests.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:typed_data';
 
-class AppState with ChangeNotifier{
+
+class AppStateProvider with ChangeNotifier{
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
@@ -12,24 +17,20 @@ class AppState with ChangeNotifier{
   static LatLng _center;
   LatLng _lastPosition = _center;
   TextEditingController _locationController = TextEditingController();
-  Color primary = Colors.black;
-  Color active = Colors.orange[200];
-  Color disabled = Colors.grey[200];
-  Color white = Colors.white;
+  TextEditingController destinationController = TextEditingController();
+
   LatLng get center => _center;
   LatLng get lastPosition => _lastPosition;
   TextEditingController get locationController => _locationController;
   Set<Marker> get markers => _markers;
   Set<Polyline> get poly => _poly;
   GoogleMapController get mapController => _mapController;
+  RouteModel routeModel;
 
-  AppState._(){
+  AppStateProvider(){
     _getUserLocation();
   }
 
-  factory AppState(){
-    return AppState._();
-  }
     _getUserLocation() async {
     Position position = await Geolocator()
         .getCurrentPosition();
@@ -54,36 +55,81 @@ class AppState with ChangeNotifier{
     _lastPosition = position.target;
   }
 
-    _addMarker(LatLng position, String destination) {
+    _addLocationMarker(LatLng position, String destination, String distance) {
+    _markers = {};
     var uuid = new Uuid();
     String markerId = uuid.v1();
       _markers.add(Marker(
           markerId: MarkerId(markerId),
           position: position,
-          infoWindow: InfoWindow(title: destination, snippet: "destino"),
+          infoWindow: InfoWindow(title: destination, snippet: distance),
           icon: BitmapDescriptor.defaultMarker));
           notifyListeners();
   }
 
-    void sendRequest(String intendedLocation) async {
-    List<Placemark> placemark =
-        await Geolocator().placemarkFromAddress(intendedLocation);
-    double latitude = placemark[0].position.latitude;
-    double longitude = placemark[0].position.longitude;
-    LatLng destination = LatLng(latitude, longitude);
-    _addMarker(destination, intendedLocation);
-    String route =
-        await _googleMapsServices.getRouteByCoordinates(_center, destination);
-    _createRoute(route);
+  void _addDriverMarker(LocationData newLocalData, Uint8List imageData) {
+    LatLng latlng = LatLng(newLocalData.latitude, newLocalData.longitude);
+    var uuid = new Uuid();
+    String markerId = uuid.v1();
+    _markers.add(Marker(
+        markerId: MarkerId(markerId),
+        position: latlng,
+        rotation: newLocalData.heading,
+        draggable: false,
+        zIndex: 2,
+        flat: true,
+        anchor: Offset(0.5, 0.5),
+        icon: BitmapDescriptor.fromBytes(imageData)));
+  }
+
+    void sendRequest({String intendedLocation, LatLng coordinates}) async {
+      LatLng destination = coordinates;
+      RouteModel route =
+      await _googleMapsServices.getRouteByCoordinates(_center, destination);
+      routeModel = route;
+      _addLocationMarker(destination, routeModel.endAddress, routeModel.distance.text);
+      _center = destination;
+      destinationController.text = routeModel.endAddress;
+
+      _createRoute(route.points);
+      notifyListeners();
+
+//    if(intendedLocation != null){
+//      List<Placemark> placemark =
+//      await Geolocator().placemarkFromAddress(intendedLocation);
+//      double latitude = placemark[0].position.latitude;
+//      double longitude = placemark[0].position.longitude;
+//      LatLng destination = LatLng(latitude, longitude);
+//      _center = destination;
+//      RouteModel route =
+//      await _googleMapsServices.getRouteByCoordinates(_center, destination);
+//      routeModel = route;
+//      _addMarker(destination, routeModel.endAddress, routeModel.distance.text);
+//
+//      _createRoute(route.points);
+//      notifyListeners();
+//    }else{
+//      LatLng destination = coordinates;
+//      RouteModel route =
+//      await _googleMapsServices.getRouteByCoordinates(_center, destination);
+//      routeModel = route;
+//      _addMarker(destination, routeModel.endAddress, routeModel.distance.text);
+//      _center = destination;
+//
+//      _createRoute(route.points);
+//      notifyListeners();
+//    }
+
   }
 
     void _createRoute(String decodeRoute) {
+    _poly = {};
     var uuid = new Uuid();
     String polyId = uuid.v1();
       poly.add(Polyline(
           polylineId: PolylineId(polyId),
-          width: 10,
-          color: Colors.orange,
+          width: 12,
+          color: primary,
           onTap: () {},
           points: _convertToLatLong(_decodePoly(decodeRoute))));
           notifyListeners();
@@ -132,5 +178,10 @@ class AppState with ChangeNotifier{
     print(lList.toString());
 
     return lList;
+  }
+
+  Future<Uint8List> getMarker(BuildContext context) async {
+    ByteData byteData = await DefaultAssetBundle.of(context).load("images/car.png");
+    return byteData.buffer.asUint8List();
   }
 }

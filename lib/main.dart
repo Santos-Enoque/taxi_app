@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:txapita/states/app_state.dart';
+import 'package:txapita/providers/app_state.dart';
 import 'screens/home.dart';
 import 'package:provider/provider.dart';
 void main(){
+  WidgetsFlutterBinding.ensureInitialized();
   return runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider<AppState>.value(
-        value: AppState(),
+      ChangeNotifierProvider<AppStateProvider>.value(
+        value: AppStateProvider(),
       )
     ],
     child: MyApp(),
