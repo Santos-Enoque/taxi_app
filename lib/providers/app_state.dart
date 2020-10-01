@@ -1,7 +1,12 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:txapita/helpers/style.dart';
 import 'package:txapita/models/route.dart';
 import 'package:txapita/services/map_requests.dart';
@@ -9,62 +14,69 @@ import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
 
 
-class AppStateProvider with ChangeNotifier{
+class AppStateProvider with ChangeNotifier {
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
   GoogleMapController _mapController;
+  Geoflutterfire geo = Geoflutterfire();
   static LatLng _center;
   LatLng _lastPosition = _center;
   TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
 
   LatLng get center => _center;
+
   LatLng get lastPosition => _lastPosition;
+
   TextEditingController get locationController => _locationController;
+
   Set<Marker> get markers => _markers;
+
   Set<Polyline> get poly => _poly;
+
   GoogleMapController get mapController => _mapController;
   RouteModel routeModel;
 
-  AppStateProvider(){
+  AppStateProvider() {
     _getUserLocation();
+    _getDrivers();
   }
 
-    _getUserLocation() async {
+  _getUserLocation() async {
     Position position = await Geolocator()
         .getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
-      _center = LatLng(position.latitude, position.longitude);
-      _locationController.text = placemark[0].name;
-      notifyListeners();
+    _center = LatLng(position.latitude, position.longitude);
+    _locationController.text = placemark[0].name;
+    notifyListeners();
   }
 
   onCreate(GoogleMapController controller) {
-      _mapController = controller;
-      notifyListeners();
+    _mapController = controller;
+    notifyListeners();
   }
 
-  setLastPosition(LatLng position){
+  setLastPosition(LatLng position) {
     _lastPosition = position;
     notifyListeners();
   }
 
-    onCameraMove(CameraPosition position) {
+  onCameraMove(CameraPosition position) {
     _lastPosition = position.target;
   }
 
-    _addLocationMarker(LatLng position, String destination, String distance) {
-    _markers = {};
+  _addLocationMarker(LatLng position, String destination, String distance) {
+//    _markers.clear();
     var uuid = new Uuid();
     String markerId = uuid.v1();
-      _markers.add(Marker(
-          markerId: MarkerId(markerId),
-          position: position,
-          infoWindow: InfoWindow(title: destination, snippet: distance),
-          icon: BitmapDescriptor.defaultMarker));
-          notifyListeners();
+    _markers.add(Marker(
+        markerId: MarkerId(markerId),
+        position: position,
+        infoWindow: InfoWindow(title: destination, snippet: distance),
+        icon: BitmapDescriptor.defaultMarker));
+    notifyListeners();
   }
 
   void _addDriverMarker(LocationData newLocalData, Uint8List imageData) {
@@ -82,17 +94,18 @@ class AppStateProvider with ChangeNotifier{
         icon: BitmapDescriptor.fromBytes(imageData)));
   }
 
-    void sendRequest({String intendedLocation, LatLng coordinates}) async {
-      LatLng destination = coordinates;
-      RouteModel route =
-      await _googleMapsServices.getRouteByCoordinates(_center, destination);
-      routeModel = route;
-      _addLocationMarker(destination, routeModel.endAddress, routeModel.distance.text);
-      _center = destination;
-      destinationController.text = routeModel.endAddress;
+  void sendRequest({String intendedLocation, LatLng coordinates}) async {
+    LatLng destination = coordinates;
+    RouteModel route =
+    await _googleMapsServices.getRouteByCoordinates(_center, destination);
+    routeModel = route;
+    _addLocationMarker(
+        destination, routeModel.endAddress, routeModel.distance.text);
+    _center = destination;
+    destinationController.text = routeModel.endAddress;
 
-      _createRoute(route.points);
-      notifyListeners();
+    _createRoute(route.points);
+    notifyListeners();
 
 //    if(intendedLocation != null){
 //      List<Placemark> placemark =
@@ -122,20 +135,20 @@ class AppStateProvider with ChangeNotifier{
 
   }
 
-    void _createRoute(String decodeRoute) {
-    _poly = {};
+  void _createRoute(String decodeRoute) {
+    _poly.clear();
     var uuid = new Uuid();
     String polyId = uuid.v1();
-      poly.add(Polyline(
-          polylineId: PolylineId(polyId),
-          width: 12,
-          color: primary,
-          onTap: () {},
-          points: _convertToLatLong(_decodePoly(decodeRoute))));
-          notifyListeners();
+    poly.add(Polyline(
+        polylineId: PolylineId(polyId),
+        width: 12,
+        color: primary,
+        onTap: () {},
+        points: _convertToLatLong(_decodePoly(decodeRoute))));
+    notifyListeners();
   }
 
-    List<LatLng> _convertToLatLong(List points) {
+  List<LatLng> _convertToLatLong(List points) {
     List<LatLng> result = <LatLng>[];
     for (int i = 0; i < points.length; i++) {
       if (i % 2 != 0) {
@@ -173,7 +186,8 @@ class AppStateProvider with ChangeNotifier{
     } while (index < len);
 
 /*adding to previous value as done in encoding */
-    for (var i = 2; i < lList.length; i++) lList[i] += lList[i - 2];
+    for (var i = 2; i < lList.length; i++)
+      lList[i] += lList[i - 2];
 
     print(lList.toString());
 
@@ -181,7 +195,35 @@ class AppStateProvider with ChangeNotifier{
   }
 
   Future<Uint8List> getMarker(BuildContext context) async {
-    ByteData byteData = await DefaultAssetBundle.of(context).load("images/car.png");
+    ByteData byteData = await DefaultAssetBundle.of(context).load(
+        "images/car.png");
     return byteData.buffer.asUint8List();
+  }
+
+  BehaviorSubject<double> radius = BehaviorSubject.seeded(100.0);
+  Stream<dynamic> query;
+
+  StreamSubscription subscription;
+
+  _getDrivers() {
+    geo.collection(collectionRef: Firestore.instance.collection("locations"))
+        .within(center: GeoFirePoint(-25.76565, 32.606498),
+        radius: 3000,
+        field: "position",
+    strictMode: true).listen(_updateMarkers);
+  }
+
+  _updateMarkers(List<DocumentSnapshot> docs){
+    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
+    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
+    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
+    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
+    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
+    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
+
+    docs.forEach((DocumentSnapshot document) {
+      GeoPoint point = document.data['position']['geopoint'];
+      _addLocationMarker(LatLng(point.latitude, point.longitude), "aaa", "5km");
+    });
   }
 }

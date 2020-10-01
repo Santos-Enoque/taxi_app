@@ -19,23 +19,24 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_firestore: ^0.9.0
-  firebase_auth: ^0.8.4+5
-  firebase_database: ^2.0.3
+  cloud_firestore: ^0.13.0+1
+  firebase_auth:
+  firebase_core: ^0.4.4
   rxdart: any
-  google_maps_flutter: ^0.5.11+1
-#  geoflutterfire: ^2.0.3+2
-  location: ^2.3.5
-  uuid: ^2.0.1
-  google_maps_webservice: ^0.0.14
-  geolocator: ^5.0.1
-  http: ^0.12.0+2
+  google_maps_flutter:
+  location:
+  uuid:
+  google_maps_webservice:
+  geolocator:
+  http:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
-  provider: ^3.0.0+1
-  geocoder: ^0.1.2
-  flutter_google_places: ^0.2.3
+  cupertino_icons:
+  provider:
+  geocoder:
+  flutter_google_places:
+  geoflutterfire: ^2.0.3+6
+
 
 dev_dependencies:
   flutter_test:
