@@ -8,11 +8,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:txapita/helpers/style.dart';
+import 'package:txapita/models/driver.dart';
 import 'package:txapita/models/route.dart';
+import 'package:txapita/services/drivers.dart';
 import 'package:txapita/services/map_requests.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
-
 
 class AppStateProvider with ChangeNotifier {
   Set<Marker> _markers = {};
@@ -24,6 +25,11 @@ class AppStateProvider with ChangeNotifier {
   LatLng _lastPosition = _center;
   TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
+  Position position;
+  DriverService _driverService = DriverService();
+
+  //   taxi pin
+  BitmapDescriptor pinLocationIcon;
 
   LatLng get center => _center;
 
@@ -39,18 +45,19 @@ class AppStateProvider with ChangeNotifier {
   RouteModel routeModel;
 
   AppStateProvider() {
+    _setCustomMapPin();
     _getUserLocation();
-    _getDrivers();
+    _driverService.getDrivers().listen(_updateMarkers);
   }
 
-  _getUserLocation() async {
-    Position position = await Geolocator()
-        .getCurrentPosition();
+  Future<Position> _getUserLocation() async {
+    position = await Geolocator().getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
     _center = LatLng(position.latitude, position.longitude);
     _locationController.text = placemark[0].name;
     notifyListeners();
+    return position;
   }
 
   onCreate(GoogleMapController controller) {
@@ -79,25 +86,22 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _addDriverMarker(LocationData newLocalData, Uint8List imageData) {
-    LatLng latlng = LatLng(newLocalData.latitude, newLocalData.longitude);
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
+  void _addDriverMarker({LatLng position, double rotation, String driverId}) {
     _markers.add(Marker(
-        markerId: MarkerId(markerId),
-        position: latlng,
-        rotation: newLocalData.heading,
+        markerId: MarkerId(driverId),
+        position: position,
+        rotation: rotation,
         draggable: false,
         zIndex: 2,
         flat: true,
         anchor: Offset(0.5, 0.5),
-        icon: BitmapDescriptor.fromBytes(imageData)));
+        icon: pinLocationIcon));
   }
 
   void sendRequest({String intendedLocation, LatLng coordinates}) async {
     LatLng destination = coordinates;
     RouteModel route =
-    await _googleMapsServices.getRouteByCoordinates(_center, destination);
+        await _googleMapsServices.getRouteByCoordinates(_center, destination);
     routeModel = route;
     _addLocationMarker(
         destination, routeModel.endAddress, routeModel.distance.text);
@@ -106,33 +110,6 @@ class AppStateProvider with ChangeNotifier {
 
     _createRoute(route.points);
     notifyListeners();
-
-//    if(intendedLocation != null){
-//      List<Placemark> placemark =
-//      await Geolocator().placemarkFromAddress(intendedLocation);
-//      double latitude = placemark[0].position.latitude;
-//      double longitude = placemark[0].position.longitude;
-//      LatLng destination = LatLng(latitude, longitude);
-//      _center = destination;
-//      RouteModel route =
-//      await _googleMapsServices.getRouteByCoordinates(_center, destination);
-//      routeModel = route;
-//      _addMarker(destination, routeModel.endAddress, routeModel.distance.text);
-//
-//      _createRoute(route.points);
-//      notifyListeners();
-//    }else{
-//      LatLng destination = coordinates;
-//      RouteModel route =
-//      await _googleMapsServices.getRouteByCoordinates(_center, destination);
-//      routeModel = route;
-//      _addMarker(destination, routeModel.endAddress, routeModel.distance.text);
-//      _center = destination;
-//
-//      _createRoute(route.points);
-//      notifyListeners();
-//    }
-
   }
 
   void _createRoute(String decodeRoute) {
@@ -157,7 +134,6 @@ class AppStateProvider with ChangeNotifier {
     }
     return result;
   }
-
 
   List _decodePoly(String poly) {
     var list = poly.codeUnits;
@@ -186,44 +162,56 @@ class AppStateProvider with ChangeNotifier {
     } while (index < len);
 
 /*adding to previous value as done in encoding */
-    for (var i = 2; i < lList.length; i++)
-      lList[i] += lList[i - 2];
+    for (var i = 2; i < lList.length; i++) lList[i] += lList[i - 2];
 
     print(lList.toString());
 
     return lList;
   }
 
-  Future<Uint8List> getMarker(BuildContext context) async {
-    ByteData byteData = await DefaultAssetBundle.of(context).load(
-        "images/car.png");
-    return byteData.buffer.asUint8List();
-  }
+//  _getDrivers({Position userPosition}) async {
+//    geo
+//        .collection(collectionRef: Firestore.instance.collection("locations"))
+//        .within(
+//            center: GeoFirePoint(userPosition.latitude, userPosition.longitude),
+//            radius: 20,
+//            field: "geolocation",
+//    strictMode: true).listen(_updateMarkers);
+//  }
 
-  BehaviorSubject<double> radius = BehaviorSubject.seeded(100.0);
-  Stream<dynamic> query;
+  _updateMarkers(List<DriverModel> drivers) {
+    drivers.forEach((DriverModel driver) {
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
+      print("DRIVER AME IS: ${driver.name}");
 
-  StreamSubscription subscription;
-
-  _getDrivers() {
-    geo.collection(collectionRef: Firestore.instance.collection("locations"))
-        .within(center: GeoFirePoint(-25.76565, 32.606498),
-        radius: 3000,
-        field: "position",
-    strictMode: true).listen(_updateMarkers);
-  }
-
-  _updateMarkers(List<DocumentSnapshot> docs){
-    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
-    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
-    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
-    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
-    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
-    print("THE TOTAL NUMBER OF OBJECTS IS: ${docs.length}");
-
-    docs.forEach((DocumentSnapshot document) {
-      GeoPoint point = document.data['position']['geopoint'];
-      _addLocationMarker(LatLng(point.latitude, point.longitude), "aaa", "5km");
+      _addDriverMarker(
+        driverId: driver.id,
+          position: LatLng(driver.position.lat,
+              driver.position.lng),
+          rotation: driver.position.heading);
     });
+  }
+
+  _setCustomMapPin() async {
+    pinLocationIcon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5), 'images/car.png');
   }
 }

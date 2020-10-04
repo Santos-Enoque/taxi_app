@@ -1,42 +1,92 @@
 {
   "project_info": {
-    "project_number": "714889229298",
-    "firebase_url": "https://txapita.firebaseio.com",
-    "project_id": "txapita",
-    "storage_bucket": "txapita.appspot.com"
+    "project_number": "720101278386",
+    "firebase_url": "https://uber-b8a17.firebaseio.com",
+    "project_id": "uber-b8a17",
+    "storage_bucket": "uber-b8a17.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:714889229298:android:3e52723d42ff0599",
+        "mobilesdk_app_id": "1:720101278386:android:307351c64e368d98263fab",
         "android_client_info": {
-          "package_name": "com.santosenoque.txapita"
+          "package_name": "com.santosenoque.cabdriver"
         }
       },
       "oauth_client": [
         {
-          "client_id": "714889229298-68ocrfjce7sp907m7jlri1lpdamejga1.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.santosenoque.txapita",
-            "certificate_hash": "d1de65707c7ebcf4d8e50a8d1f0c507a286c740d"
-          }
-        },
-        {
-          "client_id": "714889229298-3tnfphvrqi8sk0s1un2jk9okaqkmm4sh.apps.googleusercontent.com",
+          "client_id": "720101278386-vl1jlfa0muo206hcvlkkelgoen102fon.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBsc3V5aFafMBPvMkg6x6BEkQtFR8NSLjo"
+          "current_key": "AIzaSyCLt_mjoRTVTD9EbWZS5m09-5Vgtx5OFks"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "714889229298-3tnfphvrqi8sk0s1un2jk9okaqkmm4sh.apps.googleusercontent.com",
+              "client_id": "720101278386-vl1jlfa0muo206hcvlkkelgoen102fon.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:720101278386:android:2406547250160a62263fab",
+        "android_client_info": {
+          "package_name": "com.santosenoque.txapita"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "720101278386-vl1jlfa0muo206hcvlkkelgoen102fon.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLt_mjoRTVTD9EbWZS5m09-5Vgtx5OFks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "720101278386-vl1jlfa0muo206hcvlkkelgoen102fon.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:720101278386:android:c9a4a2e130884176263fab",
+        "android_client_info": {
+          "package_name": "com.santosenoque.uberapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "720101278386-vl1jlfa0muo206hcvlkkelgoen102fon.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLt_mjoRTVTD9EbWZS5m09-5Vgtx5OFks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "720101278386-vl1jlfa0muo206hcvlkkelgoen102fon.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

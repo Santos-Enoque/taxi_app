@@ -73,7 +73,7 @@ class _MapState extends State<Map> {
             children: <Widget>[
               GoogleMap(
                 initialCameraPosition:
-                CameraPosition(target: appState.center, zoom: 13),
+                CameraPosition(target: appState.center, zoom: 15),
                 onMapCreated: appState.onCreate,
                 myLocationEnabled: true,
                 mapType: MapType.normal,
