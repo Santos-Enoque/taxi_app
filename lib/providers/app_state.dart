@@ -87,8 +87,10 @@ class AppStateProvider with ChangeNotifier {
   }
 
   void _addDriverMarker({LatLng position, double rotation, String driverId}) {
+    var uuid = new Uuid();
+    String markerId = uuid.v1();
     _markers.add(Marker(
-        markerId: MarkerId(driverId),
+        markerId: MarkerId(markerId),
         position: position,
         rotation: rotation,
         draggable: false,
@@ -180,27 +182,19 @@ class AppStateProvider with ChangeNotifier {
 //  }
 
   _updateMarkers(List<DriverModel> drivers) {
+    clearMarkers();
     drivers.forEach((DriverModel driver) {
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
-      print("DRIVER AME IS: ${driver.name}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+
 
       _addDriverMarker(
         driverId: driver.id,
@@ -213,5 +207,15 @@ class AppStateProvider with ChangeNotifier {
   _setCustomMapPin() async {
     pinLocationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), 'images/car.png');
+  }
+
+  clearMarkers(){
+    _markers.clear();
+    notifyListeners();
+  }
+
+  clearPoly(){
+    _poly.clear();
+    notifyListeners();
   }
 }

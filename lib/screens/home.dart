@@ -209,7 +209,9 @@ class _MapState extends State<Map> {
                   height: 48,
                   child: Padding(
                     padding: const EdgeInsets.only(left:15.0, right: 15.0),
-                    child: RaisedButton(onPressed: (){}, color: darkBlue,
+                    child: RaisedButton(onPressed: (){
+                      appState.clearMarkers();
+                    }, color: darkBlue,
                       child: Text("Confirm Booking", style: TextStyle(color: white, fontSize: 16),),),
                   ),
                 ),)
