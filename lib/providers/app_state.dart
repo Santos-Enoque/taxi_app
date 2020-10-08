@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
@@ -27,6 +28,8 @@ class AppStateProvider with ChangeNotifier {
   TextEditingController destinationController = TextEditingController();
   Position position;
   DriverService _driverService = DriverService();
+  String _driversNode = "drivers";
+  DatabaseReference _driversRef;
 
   //   taxi pin
   BitmapDescriptor pinLocationIcon;
@@ -43,11 +46,20 @@ class AppStateProvider with ChangeNotifier {
 
   GoogleMapController get mapController => _mapController;
   RouteModel routeModel;
+  List<DriverModel> driversList = [];
+
 
   AppStateProvider() {
     _setCustomMapPin();
     _getUserLocation();
-    _driverService.getDrivers().listen(_updateMarkers);
+    _getDrivers();
+//    _driverService.getDrivers().listen(_updateMarkers);
+  }
+
+  _getDrivers(){
+    FirebaseDatabase.instance.reference().child("drivers").onValue.listen(_updateMarkers);
+    FirebaseDatabase.instance.reference().child("drivers").onChildChanged.listen(_updateMarkers);
+    FirebaseDatabase.instance.reference().child("drivers").onChildAdded.listen(_updateMarkers);
   }
 
   Future<Position> _getUserLocation() async {
@@ -171,37 +183,35 @@ class AppStateProvider with ChangeNotifier {
     return lList;
   }
 
-//  _getDrivers({Position userPosition}) async {
-//    geo
-//        .collection(collectionRef: Firestore.instance.collection("locations"))
-//        .within(
-//            center: GeoFirePoint(userPosition.latitude, userPosition.longitude),
-//            radius: 20,
-//            field: "geolocation",
-//    strictMode: true).listen(_updateMarkers);
-//  }
-
-  _updateMarkers(List<DriverModel> drivers) {
+  _updateMarkers(Event event) {
     clearMarkers();
-    drivers.forEach((DriverModel driver) {
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
 
+    var data = <dynamic, dynamic>{};
+     data  = event.snapshot.value;
+    data.forEach((key, value) {
+      if(value is Map && key == value['id']){
 
-      _addDriverMarker(
-        driverId: driver.id,
-          position: LatLng(driver.position.lat,
-              driver.position.lng),
-          rotation: driver.position.heading);
+        print("====NEW KEY === ${key.toString()} ====NEW VALUE === ${value.toString()}");
+        DriverModel driver =  DriverModel.fromMap(value);
+
+        if(!driversList.contains(driver))
+          driversList.add(driver);
+
+        _addDriverMarker(
+            driverId: driver.id,
+            position: LatLng(driver.position.lat,
+                driver.position.lng),
+            rotation: driver.position.heading.toDouble());
+      }
     });
+
+    print("==== THERE ARE THIS MANY DRIVERS ${driversList.length}");
+    print("==== THERE ARE THIS MANY DRIVERS ${driversList.length}");
+    print("==== THERE ARE THIS MANY DRIVERS ${driversList.length}");
+    print("==== THERE ARE THIS MANY DRIVERS ${driversList.length}");
+    print("==== THERE ARE THIS MANY DRIVERS ${driversList.length}");
+
+
   }
 
   _setCustomMapPin() async {

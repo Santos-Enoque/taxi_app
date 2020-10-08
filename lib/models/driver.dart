@@ -20,12 +20,21 @@ class DriverModel {
         lng: snapshot.data[POSITION][LONGITUDE],
         heading: snapshot.data[POSITION][HEADING]);
   }
+
+  DriverModel.fromMap(Map data) {
+    name = data[NAME];
+    id = data[ID];
+    position = DriverPosition(
+        lat: data[POSITION][LATITUDE],
+        lng: data[POSITION][LONGITUDE],
+        heading: data[POSITION][HEADING]);
+  }
 }
 
 class DriverPosition {
   final double lat;
   final double lng;
-  final double heading;
+  final int heading;
 
   DriverPosition({this.lat, this.lng, this.heading});
 }
