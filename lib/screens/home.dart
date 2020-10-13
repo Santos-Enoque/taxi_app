@@ -4,9 +4,14 @@ import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:txapita/helpers/constants.dart';
+import 'package:txapita/helpers/screen_navigation.dart';
 import 'package:txapita/helpers/style.dart';
 import 'package:txapita/providers/app_state.dart';
 import "package:google_maps_webservice/places.dart";
+import 'package:txapita/providers/user.dart';
+import 'package:txapita/widgets/custom_text.dart';
+
+import 'login.dart';
 
 GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: GOOGLE_MAPS_API_KEY);
 
@@ -24,16 +29,33 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    AppStateProvider appState = Provider.of<AppStateProvider>(context);
+    UserProvider userProvider = Provider.of<UserProvider>(context);
     return SafeArea(
       child: Scaffold(
           key: scaffoldState,
-          drawer: Drawer(
-            child: Scaffold(
-              appBar: AppBar(
-                title: Text("Settings"),
-              ),
-            ),
-          ),
+          drawer:Drawer(
+              child: ListView(
+                children: [
+                  UserAccountsDrawerHeader(
+                      accountName: CustomText(
+                        text: userProvider.userModel?.name ?? "",
+                        size: 18,
+                        weight: FontWeight.bold,
+                      ),
+                      accountEmail: CustomText(
+                        text: userProvider.userModel?.email ?? "",
+                      )),
+                  ListTile(
+                    leading: Icon(Icons.exit_to_app),
+                    title: CustomText(text: "Log out"),
+                    onTap: (){
+                      userProvider.signOut();
+                      changeScreenReplacement(context, LoginScreen());
+                    },
+                  )
+                ],
+              )),
           body: Map(scaffoldState)),
     );
   }

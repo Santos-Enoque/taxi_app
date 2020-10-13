@@ -3,7 +3,7 @@ import 'package:txapita/models/driver.dart';
 
 class DriverService{
   Firestore _firestore = Firestore.instance;
-  String collection = 'locations';
+  String collection = 'drivers';
 
   Stream<List<DriverModel>> getDrivers() {
     return _firestore

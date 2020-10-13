@@ -13,7 +13,6 @@ import 'package:txapita/models/route.dart';
 import 'package:txapita/services/drivers.dart';
 import 'package:txapita/services/map_requests.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:typed_data';
 
 class AppStateProvider with ChangeNotifier {
   Set<Marker> _markers = {};
@@ -115,7 +114,7 @@ class AppStateProvider with ChangeNotifier {
   }
 
   void _createRoute(String decodeRoute) {
-    _poly.clear();
+    clearPoly();
     var uuid = new Uuid();
     String polyId = uuid.v1();
     poly.add(Polyline(
@@ -184,16 +183,7 @@ class AppStateProvider with ChangeNotifier {
   _updateMarkers(List<DriverModel> drivers) {
     clearMarkers();
     drivers.forEach((DriverModel driver) {
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
-      print("=====DB CHANGE ===== \n latitude ${driver.position.lat} longitude ${driver.position.lng}");
+
 
 
       _addDriverMarker(
