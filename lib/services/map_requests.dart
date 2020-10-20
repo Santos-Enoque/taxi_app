@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/directions.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -14,7 +15,7 @@ class GoogleMapsServices{
         Map values = jsonDecode(response.body);
         Map routes = values["routes"][0];
         Map legs = values["routes"][0]["legs"][0];
-        RouteModel route = RouteModel(points: routes["overview_polyline"]["points"], distance: Distance.fromMap(legs['distance']), duration: Duration.fromMap(legs['duration']), endAddress: legs['end_address'], startAddress: legs['end_address'] );
+        RouteModel route = RouteModel(points: routes["overview_polyline"]["points"], distance: Distance.fromMap(legs['distance']), timeNeeded: TimeNeeded.fromMap(legs['duration']), endAddress: legs['end_address'], startAddress: legs['end_address'] );
         return route;
     }
 }

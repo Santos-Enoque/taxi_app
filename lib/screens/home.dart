@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'package:txapita/providers/app_state.dart';
 import "package:google_maps_webservice/places.dart";
 import 'package:txapita/providers/user.dart';
 import 'package:txapita/widgets/custom_text.dart';
+import 'package:txapita/widgets/loading.dart';
 
 import 'login.dart';
 
@@ -213,8 +215,9 @@ class _MapState extends State<Map> {
                       child: Row(
                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
-                         FlatButton.icon(onPressed: (){}, icon: Icon(Icons.timer), label: Text("18 min")),
-                          FlatButton.icon(onPressed: (){}, icon: Icon(Icons.attach_money), label: Text("15"))
+                         FlatButton.icon(onPressed: null, icon: Icon(Icons.timer), label: Text(appState.routeModel?.timeNeeded?.text ?? "")),
+                          FlatButton.icon(onPressed: null, icon: Icon(Icons.flag), label: Text(appState.routeModel?.distance?.text ?? "")),
+                          FlatButton(onPressed: (){}, child: CustomText(text: "\$${appState.routeModel?.distance?.value == null ? 0: appState.routeModel?.distance?.value / 500}" ?? "", color: Colors.deepOrange,))
 
 
                         ],
@@ -232,9 +235,43 @@ class _MapState extends State<Map> {
                   child: Padding(
                     padding: const EdgeInsets.only(left:15.0, right: 15.0),
                     child: RaisedButton(onPressed: (){
-                      appState.clearMarkers();
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Dialog(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(20.0)), //this right here
+                              child: Container(
+                                height: 200,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      SpinKitSquareCircle(
+                                        color: black,
+                                        size: 50,
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          CustomText(text: "Looking for a driver"),
+                                        ],
+                                      )
+
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          });
                     }, color: darkBlue,
-                      child: Text("Confirm Booking", style: TextStyle(color: white, fontSize: 16),),),
+                      child: Text("Request ride", style: TextStyle(color: white, fontSize: 16),),),
                   ),
                 ),)
             ],

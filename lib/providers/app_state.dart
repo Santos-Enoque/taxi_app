@@ -28,7 +28,10 @@ class AppStateProvider with ChangeNotifier {
   DriverService _driverService = DriverService();
 
   //   taxi pin
-  BitmapDescriptor pinLocationIcon;
+  BitmapDescriptor carPin;
+  //   location pin
+  BitmapDescriptor locationPin;
+
 
   LatLng get center => _center;
 
@@ -74,11 +77,8 @@ class AppStateProvider with ChangeNotifier {
   }
 
   _addLocationMarker(LatLng position, String destination, String distance) {
-//    _markers.clear();
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
     _markers.add(Marker(
-        markerId: MarkerId(markerId),
+        markerId: MarkerId("location"),
         position: position,
         infoWindow: InfoWindow(title: destination, snippet: distance),
         icon: BitmapDescriptor.defaultMarker));
@@ -95,15 +95,21 @@ class AppStateProvider with ChangeNotifier {
         draggable: false,
         zIndex: 2,
         flat: true,
-        anchor: Offset(0.5, 0.5),
-        icon: pinLocationIcon));
+        anchor: Offset(1, 1),
+        icon: carPin));
   }
 
   void sendRequest({String intendedLocation, LatLng coordinates}) async {
     LatLng destination = coordinates;
+    LatLng origin = LatLng(position.latitude, position.longitude);
     RouteModel route =
-        await _googleMapsServices.getRouteByCoordinates(_center, destination);
+        await _googleMapsServices.getRouteByCoordinates(origin, destination);
     routeModel = route;
+    List<Marker> mks = _markers.where((element) => element.markerId.value == "location").toList();
+      if(mks.length >= 1){
+        _markers.remove(mks[0]);
+      }
+
     _addLocationMarker(
         destination, routeModel.endAddress, routeModel.distance.text);
     _center = destination;
@@ -181,11 +187,15 @@ class AppStateProvider with ChangeNotifier {
 //  }
 
   _updateMarkers(List<DriverModel> drivers) {
+//    this code will ensure that when the driver markers are updated the location marker wont be deleted
+    List<Marker> locationMarkers = _markers.where((element) => element.markerId.value == 'location').toList();
     clearMarkers();
+    if(locationMarkers.length > 0){
+      _markers.add(locationMarkers[0]);
+    }
+
+//    here we are updating the drivers markers
     drivers.forEach((DriverModel driver) {
-
-
-
       _addDriverMarker(
         driverId: driver.id,
           position: LatLng(driver.position.lat,
@@ -195,8 +205,11 @@ class AppStateProvider with ChangeNotifier {
   }
 
   _setCustomMapPin() async {
-    pinLocationIcon = await BitmapDescriptor.fromAssetImage(
+    carPin = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), 'images/car.png');
+
+    locationPin = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5), 'images/pin.png');
   }
 
   clearMarkers(){
