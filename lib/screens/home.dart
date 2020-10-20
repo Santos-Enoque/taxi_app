@@ -3,6 +3,7 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:txapita/helpers/constants.dart';
 import 'package:txapita/helpers/screen_navigation.dart';
@@ -88,6 +89,8 @@ class _MapState extends State<Map> {
   @override
   Widget build(BuildContext context) {
     AppStateProvider appState = Provider.of<AppStateProvider>(context);
+    UserProvider userProvider = Provider.of<UserProvider>(context);
+
     return appState.center == null
         ? Container(
             alignment: Alignment.center,
@@ -168,7 +171,11 @@ class _MapState extends State<Map> {
                                 mode: Mode.overlay, // Mode.fullscreen
                                 language: "pt",
                                 components: [new Component(Component.country, "mz")]);
+                            print("======= DESCRIPTION ${p.description}");                            print("======= DESCRIPTION ${p.description}");
+                            print("======= DESCRIPTION ${p.description}");
+                            print("======= DESCRIPTION ${p.description}");
 
+                            appState.updateDestination(destination: p.description);
 //                            displayPrediction(p);
                             PlacesDetailsResponse detail =
                             await places.getDetailsByPlaceId(p.placeId);
@@ -229,12 +236,24 @@ class _MapState extends State<Map> {
                 bottom: 10,
                 left: 0,
                 right: 0,
-                child: SizedBox(
+                child: appState.lookingForDriver ? ListTile(
+                  title:  SpinKitWave(
+                    color: black,
+                    size: 30,
+                  ),
+                  subtitle: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomText(text: "Looking for drivers!"),
+                    ],
+                  ),
+                ) : SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: Padding(
                     padding: const EdgeInsets.only(left:15.0, right: 15.0),
                     child: RaisedButton(onPressed: (){
+                      appState.requestDriver(user: userProvider.userModel, lat: appState.position.latitude, lng: appState.position.longitude);
                       showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -262,16 +281,27 @@ class _MapState extends State<Map> {
                                         children: [
                                           CustomText(text: "Looking for a driver"),
                                         ],
-                                      )
-
+                                      ),
+                                      SizedBox(
+                                        height: 30,
+                                      ),
+                                      LinearPercentIndicator(
+                                        lineHeight: 4,
+                                        animation: true,
+                                        animationDuration: 100000,
+                                        percent: 1,
+                                        backgroundColor: Colors.grey.withOpacity(0.2),
+                                        progressColor: Colors.deepOrange,
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
                             );
                           });
+
                     }, color: darkBlue,
-                      child: Text("Request ride", style: TextStyle(color: white, fontSize: 16),),),
+                      child:  Text("Request ride", style: TextStyle(color: white, fontSize: 16),),),
                   ),
                 ),)
             ],
