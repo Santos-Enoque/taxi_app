@@ -11,6 +11,7 @@ import 'package:txapita/helpers/style.dart';
 import 'package:txapita/providers/app_state.dart';
 import "package:google_maps_webservice/places.dart";
 import 'package:txapita/providers/user.dart';
+import 'package:txapita/screens/splash.dart';
 import 'package:txapita/widgets/custom_text.dart';
 import 'package:txapita/widgets/loading.dart';
 
@@ -92,10 +93,7 @@ class _MapState extends State<Map> {
     UserProvider userProvider = Provider.of<UserProvider>(context);
 
     return appState.center == null
-        ? Container(
-            alignment: Alignment.center,
-            child: Center(child: CircularProgressIndicator()),
-          )
+        ? Splash()
         : Stack(
             children: <Widget>[
               GoogleMap(
@@ -171,16 +169,11 @@ class _MapState extends State<Map> {
                                 mode: Mode.overlay, // Mode.fullscreen
                                 language: "pt",
                                 components: [new Component(Component.country, "mz")]);
-                            print("======= DESCRIPTION ${p.description}");                            print("======= DESCRIPTION ${p.description}");
-                            print("======= DESCRIPTION ${p.description}");
-                            print("======= DESCRIPTION ${p.description}");
-
-                            appState.updateDestination(destination: p.description);
-//                            displayPrediction(p);
                             PlacesDetailsResponse detail =
                             await places.getDetailsByPlaceId(p.placeId);
                             double lat = detail.result.geometry.location.lat;
                             double lng = detail.result.geometry.location.lng;
+                            appState.changeRequestedDestination(reqDestination: p.description, lat: lat, lng: lng);
                             LatLng coordinates = LatLng(lat, lng);
                             appState.sendRequest(coordinates: coordinates);
                           },
@@ -236,16 +229,17 @@ class _MapState extends State<Map> {
                 bottom: 10,
                 left: 0,
                 right: 0,
-                child: appState.lookingForDriver ? ListTile(
-                  title:  SpinKitWave(
-                    color: black,
-                    size: 30,
-                  ),
-                  subtitle: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CustomText(text: "Looking for drivers!"),
-                    ],
+                child: appState.lookingForDriver ? Padding(
+                  padding: const EdgeInsets.only(top:14),
+                  child: Container(
+                    color: white,
+                    child: ListTile(
+                      title:  SpinKitWave(
+                        color: black,
+                        size: 30,
+                      ),
+
+                    ),
                   ),
                 ) : SizedBox(
                   width: double.infinity,
@@ -253,7 +247,7 @@ class _MapState extends State<Map> {
                   child: Padding(
                     padding: const EdgeInsets.only(left:15.0, right: 15.0),
                     child: RaisedButton(onPressed: (){
-                      appState.requestDriver(user: userProvider.userModel, lat: appState.position.latitude, lng: appState.position.longitude);
+                      appState.requestDriver(user: userProvider.userModel, lat: appState.position.latitude, lng: appState.position.longitude, context: context);
                       showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -269,9 +263,9 @@ class _MapState extends State<Map> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      SpinKitSquareCircle(
+                                      SpinKitWave(
                                         color: black,
-                                        size: 50,
+                                        size: 30,
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -293,6 +287,26 @@ class _MapState extends State<Map> {
                                         backgroundColor: Colors.grey.withOpacity(0.2),
                                         progressColor: Colors.deepOrange,
                                       ),
+
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FlatButton(onPressed: (){
+                                            Navigator.pop(context);
+                                            appState.cancelRequest();
+                                            scaffoldSate.currentState.showSnackBar(
+                                                SnackBar(content: Text("Request cancelled!"))
+                                            );
+                                          }, child: CustomText(
+                                            text: "Cancel Request", color: Colors.deepOrange,
+                                          )),
+                                        ],
+                                      )
+
                                     ],
                                   ),
                                 ),

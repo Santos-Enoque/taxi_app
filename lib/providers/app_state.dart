@@ -11,15 +11,24 @@ import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:txapita/helpers/style.dart';
 import 'package:txapita/models/driver.dart';
+import 'package:txapita/models/ride_Request.dart';
 import 'package:txapita/models/route.dart';
 import 'package:txapita/models/user.dart';
+import 'package:txapita/screens/home.dart';
 import 'package:txapita/services/drivers.dart';
 import 'package:txapita/services/map_requests.dart';
 import 'package:txapita/services/ride_requests.dart';
 import 'package:txapita/widgets/custom_text.dart';
 import 'package:uuid/uuid.dart';
 
+enum RequestStatus { pending, accepted, cancelled, expired }
+
 class AppStateProvider with ChangeNotifier {
+  static const ACCEPTED = 'accepted';
+  static const CANCELLED = 'cancelled';
+  static const PENDING = 'pending';
+  static const EXPIRED = 'expired';
+
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
@@ -51,17 +60,34 @@ class AppStateProvider with ChangeNotifier {
   GoogleMapController get mapController => _mapController;
   RouteModel routeModel;
 
-  //     this logic will update the percentage indicator
+  //  Driver request related variables
+  bool lookingForDriver = false;
+  bool alertsOnUi = false;
+  RideRequestServices _requestServices = RideRequestServices();
   int timeCounter = 0;
   double percentage = 0;
   Timer periodicTimer;
-  bool lookingForDriver = false;
-  RideRequestServices _requestServices = RideRequestServices();
+  String requestedDestination;
+
+  String requestStatus = "";
+  double requestedDestinationLat;
+
+  double requestedDestinationLng;
+  RideRequestModel rideRequestModel;
+
+  StreamSubscription<QuerySnapshot> requestStream;
 
   AppStateProvider() {
     _setCustomMapPin();
     _getUserLocation();
     _driverService.getDrivers().listen(_updateMarkers);
+  }
+
+  changeRequestedDestination({String reqDestination, double lat, double lng}) {
+    requestedDestination = reqDestination;
+    requestedDestinationLat = lat;
+    requestedDestinationLng = lng;
+    notifyListeners();
   }
 
   Future<Position> _getUserLocation() async {
@@ -92,7 +118,8 @@ class AppStateProvider with ChangeNotifier {
     _markers.add(Marker(
         markerId: MarkerId("location"),
         position: position,
-        infoWindow: InfoWindow(title: destinationController.text, snippet: distance),
+        infoWindow:
+            InfoWindow(title: destinationController.text, snippet: distance),
         icon: BitmapDescriptor.defaultMarker));
     notifyListeners();
   }
@@ -124,8 +151,7 @@ class AppStateProvider with ChangeNotifier {
       _markers.remove(mks[0]);
     }
 
-    _addLocationMarker(
-        destination, routeModel.distance.text);
+    _addLocationMarker(destination, routeModel.distance.text);
     _center = destination;
     destinationController.text = routeModel.endAddress;
 
@@ -133,7 +159,7 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateDestination({String destination}){
+  void updateDestination({String destination}) {
     destinationController.text = destination;
     notifyListeners();
   }
@@ -242,40 +268,148 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  requestDriver({UserModel user, double lat, double lng}){
+  listenToRequest({String id, BuildContext context}) {
+    print("======= LISTENING =======");
+    requestStream = _requestServices.requestStream().listen((querySnapshot) {
+      querySnapshot.documentChanges.forEach((doc) {
+        if (doc.document.data['id'] == id) {
+          rideRequestModel = RideRequestModel.fromSnapshot(doc.document);
+          notifyListeners();
+          switch (doc.document.data['status']) {
+            case CANCELLED:
+              print("====== CANCELELD");
+              break;
+            case ACCEPTED:
+              print("====== ACCEPTED");
+              showDriverBottomSheet(context);
+              break;
+            case EXPIRED:
+              print("====== EXPIRED");
+              showRequestExpiredAlert(context);
+              break;
+            default:
+              print("==== PEDING");
+              break;
+          }
+        }
+      });
+    });
+  }
+
+  requestDriver(
+      {UserModel user, double lat, double lng, BuildContext context}) {
+    alertsOnUi = true;
+    notifyListeners();
     var uuid = new Uuid();
     String id = uuid.v1();
-      _requestServices.createRideRequest(
+    _requestServices.createRideRequest(
         id: id,
         userId: user.id,
         username: user.name,
-        destination: destinationController.text.trim(),
+        destination: {
+          "address": requestedDestination,
+          "latitude": requestedDestinationLat,
+          "longitude": requestedDestinationLng
+        },
         position: {
           "latitude": lat,
           "longitude": lng
-        }
-      );
-      percentageCounter();
+        });
+    listenToRequest(
+      id: id,
+      context: context
+    );
+    percentageCounter(requestId: id, context: context);
+  }
+
+  cancelRequest(){
+    lookingForDriver = false;
+    _requestServices.updateRequest({"id": rideRequestModel.id, "status": "cancelled"});
+    periodicTimer.cancel();
+    notifyListeners();
   }
 
 //  Timer counter for driver request
-  percentageCounter() {
+  percentageCounter({String requestId, BuildContext context}) {
     lookingForDriver = true;
     notifyListeners();
     periodicTimer = Timer.periodic(Duration(seconds: 1), (time) {
       timeCounter = timeCounter + 1;
       percentage = timeCounter / 100;
-      print("====== GOGOGOG ====== $timeCounter");
-      if(timeCounter == 100 ){
+      print("====== GOOOO $timeCounter");
+      if (timeCounter == 100) {
         timeCounter = 0;
         percentage = 0;
         lookingForDriver = false;
+        _requestServices.updateRequest({"id": requestId, "status": "expired"});
         time.cancel();
-
+        if (alertsOnUi) {
+          Navigator.pop(context);
+          alertsOnUi = false;
+          notifyListeners();
+        }
+        requestStream.cancel();
       }
       notifyListeners();
     });
   }
 
+//  UI METHODS
+  showRequestCancelledSnackBar(BuildContext context) {}
 
+  showRequestExpiredAlert(BuildContext context) {
+    if(alertsOnUi)
+      Navigator.pop(context);
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius:
+                BorderRadius.circular(20.0)), //this right here
+            child: Container(
+              height: 200,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child:  Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CustomText(text: "DRIVERS NOT FOUND! \n TRY REQUESTING AGAIN")
+                  ],
+                )
+              ),
+            ),
+          );
+        });
+  }
+
+  showDriverBottomSheet(BuildContext context) {
+    if(alertsOnUi)
+      Navigator.pop(context);
+
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc){
+          return Container(
+            child: new Wrap(
+              children: <Widget>[
+                new ListTile(
+                    leading: new Icon(Icons.music_note),
+                    title: new Text('Music'),
+                    onTap: () => {}
+                ),
+                new ListTile(
+                  leading: new Icon(Icons.videocam),
+                  title: new Text('Video'),
+                  onTap: () => {},
+                ),
+              ],
+            ),
+          );
+        }
+    );
+
+  }
 }
