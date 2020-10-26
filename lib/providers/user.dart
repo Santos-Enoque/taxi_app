@@ -104,6 +104,16 @@ class UserProvider with ChangeNotifier{
      _userServices.updateUserData(data);
   }
 
+  saveDeviceToken()async{
+    String deviceToken = await fcm.getToken();
+    if(deviceToken != null){
+      _userServices.addDeviceToken(
+          userId: user.uid,
+          token: deviceToken
+      );
+    }
+  }
+
 
   _onStateChanged(FirebaseUser firebaseUser) async{
     if(firebaseUser == null){

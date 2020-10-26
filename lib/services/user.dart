@@ -31,4 +31,10 @@ class UserServices{
     return UserModel.fromSnapshot(doc);
   });
 
+  void addDeviceToken({String token, String userId}){
+    firebaseFiretore.collection(collection).document(userId).updateData({
+      "token": token
+    });
+  }
+
 }

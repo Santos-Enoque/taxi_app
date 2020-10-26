@@ -2,19 +2,16 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:txapita/helpers/constants.dart';
 import 'package:txapita/helpers/style.dart';
 import 'package:txapita/models/driver.dart';
 import 'package:txapita/models/ride_Request.dart';
 import 'package:txapita/models/route.dart';
 import 'package:txapita/models/user.dart';
-import 'package:txapita/screens/home.dart';
 import 'package:txapita/services/drivers.dart';
 import 'package:txapita/services/map_requests.dart';
 import 'package:txapita/services/ride_requests.dart';
@@ -78,18 +75,21 @@ class AppStateProvider with ChangeNotifier {
   StreamSubscription<QuerySnapshot> requestStream;
 
   AppStateProvider() {
+    _saveDeviceToken();
+    fcm.configure(
+//      this callback is used when the app runs on the foreground
+        onMessage: handleOnMessage,
+//        used when the app is closed completely and is launched using the notification
+        onLaunch: handleOnLaunch,
+//        when its on the background and opened using the notification drawer
+        onResume: handleOnResume);
+
     _setCustomMapPin();
     _getUserLocation();
     _driverService.getDrivers().listen(_updateMarkers);
   }
 
-  changeRequestedDestination({String reqDestination, double lat, double lng}) {
-    requestedDestination = reqDestination;
-    requestedDestinationLat = lat;
-    requestedDestinationLng = lng;
-    notifyListeners();
-  }
-
+// ANCHOR: MAPS & LOCATION METHODS
   Future<Position> _getUserLocation() async {
     position = await Geolocator().getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
@@ -112,30 +112,6 @@ class AppStateProvider with ChangeNotifier {
 
   onCameraMove(CameraPosition position) {
     _lastPosition = position.target;
-  }
-
-  _addLocationMarker(LatLng position, String distance) {
-    _markers.add(Marker(
-        markerId: MarkerId("location"),
-        position: position,
-        infoWindow:
-            InfoWindow(title: destinationController.text, snippet: distance),
-        icon: BitmapDescriptor.defaultMarker));
-    notifyListeners();
-  }
-
-  void _addDriverMarker({LatLng position, double rotation, String driverId}) {
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
-    _markers.add(Marker(
-        markerId: MarkerId(markerId),
-        position: position,
-        rotation: rotation,
-        draggable: false,
-        zIndex: 2,
-        flat: true,
-        anchor: Offset(1, 1),
-        icon: carPin));
   }
 
   void sendRequest({String intendedLocation, LatLng coordinates}) async {
@@ -221,15 +197,30 @@ class AppStateProvider with ChangeNotifier {
     return lList;
   }
 
-//  _getDrivers({Position userPosition}) async {
-//    geo
-//        .collection(collectionRef: Firestore.instance.collection("locations"))
-//        .within(
-//            center: GeoFirePoint(userPosition.latitude, userPosition.longitude),
-//            radius: 20,
-//            field: "geolocation",
-//    strictMode: true).listen(_updateMarkers);
-//  }
+// ANCHOR: MARKERS AND POLYS
+  _addLocationMarker(LatLng position, String distance) {
+    _markers.add(Marker(
+        markerId: MarkerId("location"),
+        position: position,
+        infoWindow:
+            InfoWindow(title: destinationController.text, snippet: distance),
+        icon: BitmapDescriptor.defaultMarker));
+    notifyListeners();
+  }
+
+  void _addDriverMarker({LatLng position, double rotation, String driverId}) {
+    var uuid = new Uuid();
+    String markerId = uuid.v1();
+    _markers.add(Marker(
+        markerId: MarkerId(markerId),
+        position: position,
+        rotation: rotation,
+        draggable: false,
+        zIndex: 2,
+        flat: true,
+        anchor: Offset(1, 1),
+        icon: carPin));
+  }
 
   _updateMarkers(List<DriverModel> drivers) {
 //    this code will ensure that when the driver markers are updated the location marker wont be deleted
@@ -265,6 +256,75 @@ class AppStateProvider with ChangeNotifier {
 
   clearPoly() {
     _poly.clear();
+    notifyListeners();
+  }
+
+// ANCHOR UI METHODS
+  showRequestCancelledSnackBar(BuildContext context) {}
+
+  showRequestExpiredAlert(BuildContext context) {
+    if (alertsOnUi) Navigator.pop(context);
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0)), //this right here
+            child: Container(
+              height: 200,
+              child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CustomText(
+                          text: "DRIVERS NOT FOUND! \n TRY REQUESTING AGAIN")
+                    ],
+                  )),
+            ),
+          );
+        });
+  }
+
+  showDriverBottomSheet(BuildContext context) {
+    if (alertsOnUi) Navigator.pop(context);
+
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return Container(
+            child: new Wrap(
+              children: <Widget>[
+                new ListTile(
+                    leading: new Icon(Icons.music_note),
+                    title: new Text('Music'),
+                    onTap: () => {}),
+                new ListTile(
+                  leading: new Icon(Icons.videocam),
+                  title: new Text('Video'),
+                  onTap: () => {},
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
+  // ANCHOR RIDE REQUEST METHODS
+  _saveDeviceToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getString('token') == null) {
+      String deviceToken = await fcm.getToken();
+      await prefs.setString('token', deviceToken);
+    }
+  }
+
+  changeRequestedDestination({String reqDestination, double lat, double lng}) {
+    requestedDestination = reqDestination;
+    requestedDestinationLat = lat;
+    requestedDestinationLng = lng;
     notifyListeners();
   }
 
@@ -315,16 +375,14 @@ class AppStateProvider with ChangeNotifier {
           "latitude": lat,
           "longitude": lng
         });
-    listenToRequest(
-      id: id,
-      context: context
-    );
+    listenToRequest(id: id, context: context);
     percentageCounter(requestId: id, context: context);
   }
 
-  cancelRequest(){
+  cancelRequest() {
     lookingForDriver = false;
-    _requestServices.updateRequest({"id": rideRequestModel.id, "status": "cancelled"});
+    _requestServices
+        .updateRequest({"id": rideRequestModel.id, "status": "cancelled"});
     periodicTimer.cancel();
     notifyListeners();
   }
@@ -354,62 +412,19 @@ class AppStateProvider with ChangeNotifier {
     });
   }
 
-//  UI METHODS
-  showRequestCancelledSnackBar(BuildContext context) {}
-
-  showRequestExpiredAlert(BuildContext context) {
-    if(alertsOnUi)
-      Navigator.pop(context);
-
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-                borderRadius:
-                BorderRadius.circular(20.0)), //this right here
-            child: Container(
-              height: 200,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child:  Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CustomText(text: "DRIVERS NOT FOUND! \n TRY REQUESTING AGAIN")
-                  ],
-                )
-              ),
-            ),
-          );
-        });
+  // ANCHOR PUSH NOTIFICATION METHODS
+  Future handleOnMessage(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    notifyListeners();
   }
 
-  showDriverBottomSheet(BuildContext context) {
-    if(alertsOnUi)
-      Navigator.pop(context);
+  Future handleOnLaunch(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    notifyListeners();
+  }
 
-    showModalBottomSheet(
-        context: context,
-        builder: (BuildContext bc){
-          return Container(
-            child: new Wrap(
-              children: <Widget>[
-                new ListTile(
-                    leading: new Icon(Icons.music_note),
-                    title: new Text('Music'),
-                    onTap: () => {}
-                ),
-                new ListTile(
-                  leading: new Icon(Icons.videocam),
-                  title: new Text('Video'),
-                  onTap: () => {},
-                ),
-              ],
-            ),
-          );
-        }
-    );
-
+  Future handleOnResume(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    notifyListeners();
   }
 }
