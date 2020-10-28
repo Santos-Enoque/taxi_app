@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     UserProvider _user = Provider.of<UserProvider>(context, listen: false);
 
-    if (_user.userModel.token != preferences.getString('token')) {
+    if (_user.userModel?.token != preferences.getString('token')) {
       Provider.of<UserProvider>(context, listen: false).saveDeviceToken();
     }
   }
@@ -133,133 +133,45 @@ class _MapState extends State<Map> {
                       scaffoldSate.currentState.openDrawer();
                     }),
               ),
-              Positioned(
-                top: 60.0,
-                right: 15.0,
-                left: 15.0,
-                child: Container(
-                  height: 120.0,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.0),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x88999999),
-                        offset: Offset(0, 5),
-                        blurRadius: 5.0,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: <Widget>[
-                      TextField(
-                        cursorColor: Colors.blue.shade900,
-                        controller: appState.locationController,
-                        decoration: InputDecoration(
-                          icon: Container(
-                            margin: EdgeInsets.only(left: 20, top: 5),
-                            width: 10,
-                            height: 10,
-                            child: Icon(
-                              Icons.location_on,
-                              color: primary,
-                            ),
-                          ),
-                          hintText: "pick up",
-                          border: InputBorder.none,
-                          contentPadding:
-                              EdgeInsets.only(left: 15.0, top: 16.0),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: TextField(
-                          onTap: () async {
-                            Prediction p = await PlacesAutocomplete.show(
-                                context: context,
-                                apiKey: GOOGLE_MAPS_API_KEY,
-                                mode: Mode.overlay, // Mode.fullscreen
-                                language: "pt",
-                                components: [
-                                  new Component(Component.country, "mz")
-                                ]);
-                            PlacesDetailsResponse detail =
-                                await places.getDetailsByPlaceId(p.placeId);
-                            double lat = detail.result.geometry.location.lat;
-                            double lng = detail.result.geometry.location.lng;
-                            appState.changeRequestedDestination(
-                                reqDestination: p.description,
-                                lat: lat,
-                                lng: lng);
-                            LatLng coordinates = LatLng(lat, lng);
-                            appState.sendRequest(coordinates: coordinates);
-                          },
-                          textInputAction: TextInputAction.go,
-//                          onSubmitted: (value) {
-//                            appState.sendRequest(intendedLocation: value);
-//                          },
-                          controller: destinationController,
-                          cursorColor: Colors.blue.shade900,
-                          decoration: InputDecoration(
-                            icon: Container(
-                              margin: EdgeInsets.only(left: 20, top: 5),
-                              width: 10,
-                              height: 10,
-                              child: Icon(
-                                Icons.local_taxi,
-                                color: primary,
-                              ),
-                            ),
-                            hintText: "destination?",
-                            border: InputBorder.none,
-                            contentPadding:
-                                EdgeInsets.only(left: 15.0, top: 16.0),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 60,
-                right: 0,
-                left: 0,
-                height: 60,
-                child: Visibility(
-                  visible: appState.routeModel != null,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0, right: 15.0),
-                    child: Container(
-                      color: Colors.white,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          FlatButton.icon(
-                              onPressed: null,
-                              icon: Icon(Icons.timer),
-                              label: Text(
-                                  appState.routeModel?.timeNeeded?.text ?? "")),
-                          FlatButton.icon(
-                              onPressed: null,
-                              icon: Icon(Icons.flag),
-                              label: Text(
-                                  appState.routeModel?.distance?.text ?? "")),
-                          FlatButton(
-                              onPressed: () {},
-                              child: CustomText(
-                                text:
-                                    "\$${appState.routeModel?.distance?.value == null ? 0 : appState.routeModel?.distance?.value / 500}" ??
-                                        "",
-                                color: Colors.deepOrange,
-                              ))
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+//              Positioned(
+//                bottom: 60,
+//                right: 0,
+//                left: 0,
+//                height: 60,
+//                child: Visibility(
+//                  visible: appState.routeModel != null,
+//                  child: Padding(
+//                    padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+//                    child: Container(
+//                      color: Colors.white,
+//                      child: Row(
+//                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                        children: <Widget>[
+//                          FlatButton.icon(
+//                              onPressed: null,
+//                              icon: Icon(Icons.timer),
+//                              label: Text(
+//                                  appState.routeModel?.timeNeeded?.text ?? "")),
+//                          FlatButton.icon(
+//                              onPressed: null,
+//                              icon: Icon(Icons.flag),
+//                              label: Text(
+//                                  appState.routeModel?.distance?.text ?? "")),
+//                          FlatButton(
+//                              onPressed: () {},
+//                              child: CustomText(
+//                                text:
+//                                    "\$${appState.routeModel?.distance?.value == null ? 0 : appState.routeModel?.distance?.value / 500}" ??
+//                                        "",
+//                                color: Colors.deepOrange,
+//                              ))
+//                        ],
+//                      ),
+//                    ),
+//                  ),
+//                ),
+//              ),
+
               Positioned(
                 bottom: 10,
                 left: 0,
@@ -277,103 +189,198 @@ class _MapState extends State<Map> {
                           ),
                         ),
                       )
-                    : SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.only(left: 15.0, right: 15.0),
-                          child: RaisedButton(
-                            onPressed: () {
-                              appState.requestDriver(
-                                  user: userProvider.userModel,
-                                  lat: appState.position.latitude,
-                                  lng: appState.position.longitude,
-                                  context: context);
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return Dialog(
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                              20.0)), //this right here
-                                      child: Container(
-                                        height: 200,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(12.0),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              SpinKitWave(
-                                                color: black,
-                                                size: 30,
-                                              ),
-                                              SizedBox(
-                                                height: 10,
-                                              ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  CustomText(
-                                                      text:
-                                                          "Looking for a driver"),
-                                                ],
-                                              ),
-                                              SizedBox(
-                                                height: 30,
-                                              ),
-                                              LinearPercentIndicator(
-                                                lineHeight: 4,
-                                                animation: true,
-                                                animationDuration: 100000,
-                                                percent: 1,
-                                                backgroundColor: Colors.grey
-                                                    .withOpacity(0.2),
-                                                progressColor:
-                                                    Colors.deepOrange,
-                                              ),
-                                              SizedBox(
-                                                height: 20,
-                                              ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  FlatButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                        appState
-                                                            .cancelRequest();
-                                                        scaffoldSate
-                                                            .currentState
-                                                            .showSnackBar(SnackBar(
-                                                                content: Text(
-                                                                    "Request cancelled!")));
-                                                      },
-                                                      child: CustomText(
-                                                        text: "Cancel Request",
-                                                        color:
-                                                            Colors.deepOrange,
-                                                      )),
-                                                ],
-                                              )
-                                            ],
-                                          ),
-                                        ),
+                    : Container(
+                        decoration: BoxDecoration(
+                            color: white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: grey.withOpacity(.5),
+                                  offset: Offset(3, 2),
+                                  blurRadius: 7)
+                            ]),
+                        child: Column(
+                          children: [
+                            // ANCHOR BOTTOM TEXT FIELDS
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Container(
+                                color: grey.withOpacity(.3),
+                                child: TextField(
+                                  onTap: () async {
+                                    Prediction p =
+                                        await PlacesAutocomplete.show(
+                                            context: context,
+                                            apiKey: GOOGLE_MAPS_API_KEY,
+                                            mode:
+                                                Mode.overlay, // Mode.fullscreen
+                                            language: "pt",
+                                            components: [
+                                          new Component(Component.country, "mz")
+                                        ]);
+                                    PlacesDetailsResponse detail = await places
+                                        .getDetailsByPlaceId(p.placeId);
+                                    double lat =
+                                        detail.result.geometry.location.lat;
+                                    double lng =
+                                        detail.result.geometry.location.lng;
+                                    appState.changeRequestedDestination(
+                                        reqDestination: p.description,
+                                        lat: lat,
+                                        lng: lng);
+                                    LatLng coordinates = LatLng(lat, lng);
+                                    appState.sendRequest(
+                                        coordinates: coordinates);
+                                  },
+                                  textInputAction: TextInputAction.go,
+//                          onSubmitted: (value) {
+//                            appState.sendRequest(intendedLocation: value);
+//                          },
+                                  controller: destinationController,
+                                  cursorColor: Colors.blue.shade900,
+                                  decoration: InputDecoration(
+                                    icon: Container(
+                                      margin:
+                                          EdgeInsets.only(left: 20, bottom: 15),
+                                      width: 10,
+                                      height: 10,
+                                      child: Icon(
+                                        Icons.location_on,
+                                        color: primary,
                                       ),
-                                    );
-                                  });
-                            },
-                            color: darkBlue,
-                            child: Text(
-                              "Request ride",
-                              style: TextStyle(color: white, fontSize: 16),
+                                    ),
+                                    hintText: "Where to go?",
+                                    hintStyle: TextStyle(
+                                        color: black,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.all(15),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+
+                            SizedBox(
+                              height: 10,
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 15.0,
+                                  right: 15.0,
+                                ),
+                                child: RaisedButton(
+                                  onPressed: () {
+                                    appState.requestDriver(
+                                        distance: appState.routeModel.distance
+                                            .toJson(),
+                                        user: userProvider.userModel,
+                                        lat: appState.position.latitude,
+                                        lng: appState.position.longitude,
+                                        context: context);
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return Dialog(
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        20.0)), //this right here
+                                            child: Container(
+                                              height: 200,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(12.0),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    SpinKitWave(
+                                                      color: black,
+                                                      size: 30,
+                                                    ),
+                                                    SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        CustomText(
+                                                            text:
+                                                                "Looking for a driver"),
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      height: 30,
+                                                    ),
+                                                    LinearPercentIndicator(
+                                                      lineHeight: 4,
+                                                      animation: true,
+                                                      animationDuration: 100000,
+                                                      percent: 1,
+                                                      backgroundColor: Colors
+                                                          .grey
+                                                          .withOpacity(0.2),
+                                                      progressColor:
+                                                          Colors.deepOrange,
+                                                    ),
+                                                    SizedBox(
+                                                      height: 20,
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        FlatButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                              appState
+                                                                  .cancelRequest();
+                                                              scaffoldSate
+                                                                  .currentState
+                                                                  .showSnackBar(
+                                                                      SnackBar(
+                                                                          content:
+                                                                              Text("Request cancelled!")));
+                                                            },
+                                                            child: CustomText(
+                                                              text:
+                                                                  "Cancel Request",
+                                                              color: Colors
+                                                                  .deepOrange,
+                                                            )),
+                                                      ],
+                                                    )
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        });
+                                  },
+                                  color: darkBlue,
+                                  child: Text(
+                                    "Request ride",
+                                    style:
+                                        TextStyle(color: white, fontSize: 16),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(
+                              height: 15,
+                            )
+                          ],
                         ),
                       ),
               )

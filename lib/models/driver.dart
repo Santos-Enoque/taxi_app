@@ -7,15 +7,47 @@ class DriverModel {
   static const LONGITUDE = "longitude";
   static const HEADING = "heading";
   static const POSITION = "position";
+  static const CAR = "car";
+  static const PLATE = "plate";
+  static const PHOTO = "photo";
+  static const RATING = "rating";
+  static const VOTES = "votes";
 
-  String id;
-  String name;
-  DriverPosition position;
+  String _id;
+  String _name;
+  String _car;
+  String _plate;
+  String _photo;
+  double _rating;
+  int _votes;
+
+  DriverPosition _position;
+
+  String get id => _id;
+
+  String get name => _name;
+
+  String get car => _car;
+
+  String get plate => _plate;
+
+  String get photo => _photo;
+
+  DriverPosition get position => _position;
+
+  double get rating => _rating;
+
+  int get votes => _votes;
 
   DriverModel.fromSnapshot(DocumentSnapshot snapshot) {
-    name = snapshot.data[NAME];
-    id = snapshot.data[ID];
-    position = DriverPosition(
+    _name = snapshot.data[NAME];
+    _id = snapshot.data[ID];
+    _car = snapshot.data[CAR];
+    _plate = snapshot.data[PLATE];
+    _photo = snapshot.data[PHOTO];
+    _rating = snapshot.data[RATING];
+    _votes = snapshot.data[VOTES];
+    _position = DriverPosition(
         lat: snapshot.data[POSITION][LATITUDE],
         lng: snapshot.data[POSITION][LONGITUDE],
         heading: snapshot.data[POSITION][HEADING]);

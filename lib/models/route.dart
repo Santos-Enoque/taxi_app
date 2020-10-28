@@ -9,10 +9,10 @@ class RouteModel {
 
   RouteModel(
       {@required this.points,
-        @required this.distance,
-        @required this.timeNeeded,
-        @required this.startAddress,
-        @required this.endAddress});
+      @required this.distance,
+      @required this.timeNeeded,
+      @required this.startAddress,
+      @required this.endAddress});
 }
 
 class Distance {
@@ -23,6 +23,8 @@ class Distance {
     text = data["text"];
     value = data["value"];
   }
+
+  Map toJson() => {"text": text, "value": value};
 }
 
 class TimeNeeded {

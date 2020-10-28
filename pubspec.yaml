@@ -20,39 +20,32 @@ dependencies:
   flutter:
     sdk: flutter
   cloud_firestore: ^0.13.0+1
-  firebase_auth:
+  cupertino_icons: null
+  firebase_auth: null
   firebase_core: ^0.4.4
-  rxdart: any
-  google_maps_flutter:
-  location:
-  uuid:
-  google_maps_webservice:
-  geolocator:
-  http:
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons:
-  provider:
-  geocoder:
-  flutter_google_places:
-  geoflutterfire: ^2.0.3+6
-  shared_preferences: ^0.5.12
-  flutter_spinkit: ^4.1.2
-  percent_indicator: ^2.1.7+2
   firebase_messaging: ^5.0.2
-
-
-
-
+  flutter_google_places: null
+  flutter_spinkit: ^4.1.2
+  geocoder: null
+  geoflutterfire: ^2.0.3+6
+  geolocator: null
+  google_maps_flutter: null
+  google_maps_webservice: null
+  http: null
+  location: null
+  modal_bottom_sheet: ^0.2.2
+  percent_indicator: ^2.1.7+2
+  provider: null
+  rxdart: any
+  shared_preferences: ^0.5.12
+  uuid: null
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
-
 # The following section is specific to Flutter.
 flutter:
 
@@ -65,13 +58,10 @@ flutter:
   assets:
     - images/
   #  - images/a_dot_ham.jpeg
-
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.
-
   # For details regarding adding assets from package dependencies, see
   # https://flutter.io/assets-and-images/#from-packages
-
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a

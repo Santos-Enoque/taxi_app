@@ -15,7 +15,9 @@ import 'package:txapita/models/user.dart';
 import 'package:txapita/services/drivers.dart';
 import 'package:txapita/services/map_requests.dart';
 import 'package:txapita/services/ride_requests.dart';
+import 'package:txapita/widgets/custom_btn.dart';
 import 'package:txapita/widgets/custom_text.dart';
+import 'package:txapita/widgets/stars.dart';
 import 'package:uuid/uuid.dart';
 
 enum RequestStatus { pending, accepted, cancelled, expired }
@@ -73,6 +75,7 @@ class AppStateProvider with ChangeNotifier {
   RideRequestModel rideRequestModel;
 
   StreamSubscription<QuerySnapshot> requestStream;
+  DriverModel driverModel;
 
   AppStateProvider() {
     _saveDeviceToken();
@@ -202,9 +205,10 @@ class AppStateProvider with ChangeNotifier {
     _markers.add(Marker(
         markerId: MarkerId("location"),
         position: position,
+        anchor: Offset(0, 0.85),
         infoWindow:
             InfoWindow(title: destinationController.text, snippet: distance),
-        icon: BitmapDescriptor.defaultMarker));
+        icon: locationPin));
     notifyListeners();
   }
 
@@ -243,7 +247,7 @@ class AppStateProvider with ChangeNotifier {
 
   _setCustomMapPin() async {
     carPin = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.5), 'images/car.png');
+        ImageConfiguration(devicePixelRatio: 2.5), 'images/taxi.png');
 
     locationPin = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), 'images/pin.png');
@@ -295,21 +299,112 @@ class AppStateProvider with ChangeNotifier {
         context: context,
         builder: (BuildContext bc) {
           return Container(
-            child: new Wrap(
-              children: <Widget>[
-                new ListTile(
-                    leading: new Icon(Icons.music_note),
-                    title: new Text('Music'),
-                    onTap: () => {}),
-                new ListTile(
-                  leading: new Icon(Icons.videocam),
-                  title: new Text('Video'),
-                  onTap: () => {},
-                ),
-              ],
-            ),
-          );
+              height: 400,
+              child: Column(
+                children: [
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomText(
+                        text: "7 MIN AWAY",
+                        color: green,
+                        weight: FontWeight.bold,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Visibility(
+                        visible: driverModel?.photo == null,
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(40)),
+                          child: CircleAvatar(
+                            backgroundColor: Colors.transparent,
+                            radius: 45,
+                            child: Icon(
+                              Icons.person,
+                              size: 65,
+                              color: white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Visibility(
+                        visible: driverModel?.photo != null,
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.deepOrange,
+                              borderRadius: BorderRadius.circular(40)),
+                          child: CircleAvatar(
+                            radius: 45,
+                            backgroundImage: NetworkImage(driverModel?.photo),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomText(text: driverModel?.name ?? "Nada"),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  _stars(rating: driverModel.rating, votes: driverModel.votes),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      FlatButton.icon(
+                          onPressed: null,
+                          icon: Icon(Icons.directions_car),
+                          label: Text(driverModel.car ?? "Nan")),
+                      CustomText(
+                        text: driverModel.plate,
+                        color: Colors.deepOrange,
+                      )
+                    ],
+                  ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      CustomBtn(
+                        text: "Call",
+                        onTap: () {},
+                        bgColor: green,
+                        shadowColor: Colors.green,
+                      ),
+                      CustomBtn(
+                        text: "Cancel",
+                        onTap: () {},
+                        bgColor: red,
+                        shadowColor: Colors.redAccent,
+                      ),
+                    ],
+                  )
+                ],
+              ));
         });
+  }
+
+  _stars({int votes, double rating}) {
+    if (votes == 0) {
+      return StarsWidget(
+        numberOfStars: 0,
+      );
+    } else {
+      double finalRate = rating / votes;
+      return StarsWidget(
+        numberOfStars: finalRate.floor(),
+      );
+    }
   }
 
   // ANCHOR RIDE REQUEST METHODS
@@ -328,10 +423,10 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  listenToRequest({String id, BuildContext context}) {
+  listenToRequest({String id, BuildContext context}) async {
     print("======= LISTENING =======");
     requestStream = _requestServices.requestStream().listen((querySnapshot) {
-      querySnapshot.documentChanges.forEach((doc) {
+      querySnapshot.documentChanges.forEach((doc) async {
         if (doc.document.data['id'] == id) {
           rideRequestModel = RideRequestModel.fromSnapshot(doc.document);
           notifyListeners();
@@ -341,6 +436,9 @@ class AppStateProvider with ChangeNotifier {
               break;
             case ACCEPTED:
               print("====== ACCEPTED");
+              driverModel = await _driverService
+                  .getDriverById(doc.document.data['driverId']);
+              periodicTimer.cancel();
               showDriverBottomSheet(context);
               break;
             case EXPIRED:
@@ -357,7 +455,11 @@ class AppStateProvider with ChangeNotifier {
   }
 
   requestDriver(
-      {UserModel user, double lat, double lng, BuildContext context}) {
+      {UserModel user,
+      double lat,
+      double lng,
+      BuildContext context,
+      Map distance}) {
     alertsOnUi = true;
     notifyListeners();
     var uuid = new Uuid();
@@ -366,6 +468,7 @@ class AppStateProvider with ChangeNotifier {
         id: id,
         userId: user.id,
         username: user.name,
+        distance: distance,
         destination: {
           "address": requestedDestination,
           "latitude": requestedDestinationLat,
