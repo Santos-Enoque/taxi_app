@@ -27,6 +27,8 @@ class AppStateProvider with ChangeNotifier {
   static const CANCELLED = 'cancelled';
   static const PENDING = 'pending';
   static const EXPIRED = 'expired';
+  static const PICKUP_MARKER_ID = 'pickup';
+  static const LOCATION_MARKER_ID = 'location';
 
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
@@ -35,7 +37,7 @@ class AppStateProvider with ChangeNotifier {
   Geoflutterfire geo = Geoflutterfire();
   static LatLng _center;
   LatLng _lastPosition = _center;
-  TextEditingController _locationController = TextEditingController();
+  TextEditingController pickupLocationControlelr = TextEditingController();
   TextEditingController destinationController = TextEditingController();
   Position position;
   DriverService _driverService = DriverService();
@@ -50,8 +52,6 @@ class AppStateProvider with ChangeNotifier {
 
   LatLng get lastPosition => _lastPosition;
 
-  TextEditingController get locationController => _locationController;
-
   Set<Marker> get markers => _markers;
 
   Set<Polyline> get poly => _poly;
@@ -62,6 +62,7 @@ class AppStateProvider with ChangeNotifier {
   //  Driver request related variables
   bool lookingForDriver = false;
   bool alertsOnUi = false;
+  bool showConfirmPickUpLocation = false;
   RideRequestServices _requestServices = RideRequestServices();
   int timeCounter = 0;
   double percentage = 0;
@@ -76,6 +77,8 @@ class AppStateProvider with ChangeNotifier {
 
   StreamSubscription<QuerySnapshot> requestStream;
   DriverModel driverModel;
+  LatLng pickupCoordinates;
+  LatLng destinationCoordinates;
 
   AppStateProvider() {
     _saveDeviceToken();
@@ -95,10 +98,9 @@ class AppStateProvider with ChangeNotifier {
 // ANCHOR: MAPS & LOCATION METHODS
   Future<Position> _getUserLocation() async {
     position = await Geolocator().getCurrentPosition();
-    List<Placemark> placemark = await Geolocator()
-        .placemarkFromCoordinates(position.latitude, position.longitude);
+    // List<Placemark> placemark = await Geolocator()
+    //     .placemarkFromCoordinates(position.latitude, position.longitude);
     _center = LatLng(position.latitude, position.longitude);
-    _locationController.text = placemark[0].name;
     notifyListeners();
     return position;
   }
@@ -115,6 +117,21 @@ class AppStateProvider with ChangeNotifier {
 
   onCameraMove(CameraPosition position) {
     _lastPosition = position.target;
+    changePickupLocationAddress(address: "loading...");
+    if (_markers.isNotEmpty) {
+      _markers.forEach((element) async {
+        if (element.markerId.value == PICKUP_MARKER_ID) {
+          _markers.remove(element);
+          addPickupMarker(position.target);
+          List<Placemark> placemark = await Geolocator()
+              .placemarkFromCoordinates(
+                  position.target.latitude, position.target.longitude);
+          pickupLocationControlelr.text = placemark[0].name;
+          notifyListeners();
+        }
+      });
+    }
+    notifyListeners();
   }
 
   void sendRequest({String intendedLocation, LatLng coordinates}) async {
@@ -132,7 +149,6 @@ class AppStateProvider with ChangeNotifier {
 
     _addLocationMarker(destination, routeModel.distance.text);
     _center = destination;
-    destinationController.text = routeModel.endAddress;
 
     _createRoute(route.points);
     notifyListeners();
@@ -203,11 +219,25 @@ class AppStateProvider with ChangeNotifier {
 // ANCHOR: MARKERS AND POLYS
   _addLocationMarker(LatLng position, String distance) {
     _markers.add(Marker(
-        markerId: MarkerId("location"),
+        markerId: MarkerId(LOCATION_MARKER_ID),
         position: position,
         anchor: Offset(0, 0.85),
         infoWindow:
             InfoWindow(title: destinationController.text, snippet: distance),
+        icon: locationPin));
+    notifyListeners();
+  }
+
+  addPickupMarker(LatLng position) {
+    // if (pickupLocationControlelr.text == null) {
+    //   ad
+    // }
+    _markers.add(Marker(
+        markerId: MarkerId(PICKUP_MARKER_ID),
+        position: position,
+        anchor: Offset(0, 0.85),
+        zIndex: 3,
+        infoWindow: InfoWindow(title: "Pickup", snippet: "location"),
         icon: locationPin));
     notifyListeners();
   }
@@ -264,6 +294,11 @@ class AppStateProvider with ChangeNotifier {
   }
 
 // ANCHOR UI METHODS
+  changeShowPickupLocationWidget() {
+    showConfirmPickUpLocation = !showConfirmPickUpLocation;
+    notifyListeners();
+  }
+
   showRequestCancelledSnackBar(BuildContext context) {}
 
   showRequestExpiredAlert(BuildContext context) {
@@ -513,6 +548,22 @@ class AppStateProvider with ChangeNotifier {
       }
       notifyListeners();
     });
+  }
+
+  setPickCoordinates({LatLng coordinates}) {
+    pickupCoordinates = coordinates;
+    notifyListeners();
+  }
+
+  setDestination({LatLng coordinates}) {
+    destinationCoordinates = coordinates;
+    notifyListeners();
+  }
+
+  changePickupLocationAddress({String address}) {
+    pickupLocationControlelr.text = address;
+    _center = pickupCoordinates;
+    notifyListeners();
   }
 
   // ANCHOR PUSH NOTIFICATION METHODS
