@@ -13,6 +13,9 @@ import 'package:uuid/uuid.dart';
 enum Status{Uninitialized, Authenticated, Authenticating, Unauthenticated}
 
 class UserProvider with ChangeNotifier{
+  static const LOGGED_IN = "loggedIn";
+  static const ID = "id";
+
   FirebaseUser _user;
   Status _status = Status.Uninitialized;
   UserServices _userServices = UserServices();
@@ -34,7 +37,7 @@ class UserProvider with ChangeNotifier{
 
 
   UserProvider.initialize(){
-    auth.onAuthStateChanged.listen(_onStateChanged);
+    _initialize();
 
   }
 
@@ -42,48 +45,58 @@ class UserProvider with ChangeNotifier{
   Future<bool> signIn()async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    try{
+//    try{
       _status = Status.Authenticating;
       notifyListeners();
       await auth.signInWithEmailAndPassword(email: email.text.trim(), password: password.text.trim()).then((value) async {
-        await prefs.setString("id", value.user.uid);
+        await prefs.setString(ID, value.user.uid);
+        await prefs.setBool(LOGGED_IN, true);
+
+        _userModel = await _userServices.getUserById(value.user.uid);
       });
       return true;
-    }catch(e){
-      _status = Status.Unauthenticated;
-      notifyListeners();
-      print(e.toString());
-      return false;
-    }
+//    }catch(e){
+//      _status = Status.Unauthenticated;
+//      notifyListeners();
+//      print(e.toString());
+//      return false;
+//    }
   }
 
 
   Future<bool> signUp()async{
-    try{
+//    try{
       _status = Status.Authenticating;
       notifyListeners();
       await auth.createUserWithEmailAndPassword(email: email.text.trim(), password: password.text.trim()).then((result) async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("id", result.user.uid);
+        await prefs.setString(ID, result.user.uid);
+        await prefs.setBool(LOGGED_IN, true);
         _userServices.createUser(
           id: result.user.uid,
           name: name.text.trim(),
           email: email.text.trim(),
           phone: phone.text.trim(),
         );
+        await prefs.setString(ID, result.user.uid);
+        await prefs.setBool(LOGGED_IN, true);
       });
       return true;
-    }catch(e){
-      _status = Status.Unauthenticated;
-      notifyListeners();
-      print(e.toString());
-      return false;
-    }
+//    }catch(e){
+//      _status = Status.Unauthenticated;
+//      notifyListeners();
+//      print(e.toString());
+//      return false;
+//    }
   }
 
   Future signOut()async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
     auth.signOut();
     _status = Status.Unauthenticated;
+    await prefs.setString(ID, null);
+    await prefs.setBool(LOGGED_IN, false);
     notifyListeners();
     return Future.delayed(Duration.zero);
   }
@@ -115,13 +128,18 @@ class UserProvider with ChangeNotifier{
   }
 
 
-  _onStateChanged(FirebaseUser firebaseUser) async{
-    if(firebaseUser == null){
+  _initialize() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool loggedIn = prefs.getBool(LOGGED_IN) ?? false;
+    if(!loggedIn){
       _status = Status.Unauthenticated;
     }else{
-      _user = firebaseUser;
-      _status = Status.Authenticated;
-      _userModel = await _userServices.getUserById(user.uid);
+      await auth.currentUser().then((currentUser) async{
+        _user = currentUser;
+        _status = Status.Authenticated;
+        _userModel = await _userServices.getUserById(currentUser.uid);
+      });
+
     }
     notifyListeners();
   }

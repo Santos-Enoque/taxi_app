@@ -14,11 +14,13 @@ import "package:google_maps_webservice/places.dart";
 import 'package:txapita/providers/user.dart';
 import 'package:txapita/screens/splash.dart';
 import 'package:txapita/widgets/custom_text.dart';
+import 'package:txapita/widgets/destination_selection.dart';
+import 'package:txapita/widgets/driver_found.dart';
 import 'package:txapita/widgets/loading.dart';
+import 'package:txapita/widgets/payment_method_selection.dart';
+import 'package:txapita/widgets/pickup_selection_widget.dart';
 
 import 'login.dart';
-
-GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: GOOGLE_MAPS_API_KEY);
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -58,12 +60,12 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             UserAccountsDrawerHeader(
                 accountName: CustomText(
-                  text: userProvider.userModel?.name ?? "",
+                  text: userProvider.userModel?.name ?? "This is null",
                   size: 18,
                   weight: FontWeight.bold,
                 ),
                 accountEmail: CustomText(
-                  text: userProvider.userModel?.email ?? "",
+                  text: userProvider.userModel?.email ?? "This is null",
                 )),
             ListTile(
               leading: Icon(Icons.exit_to_app),
@@ -80,347 +82,25 @@ class _MyHomePageState extends State<MyHomePage> {
             MapScreen(scaffoldState),
             // ANCHOR Draggable
             Visibility(
-              visible: !appState.showConfirmPickUpLocation,
-              child: DraggableScrollableSheet(
-                initialChildSize: 0.28,
-                minChildSize: 0.28,
-                builder: (BuildContext context, myscrollController) {
-                  return Container(
-                    decoration: BoxDecoration(
-                        color: white,
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20)),
-                        boxShadow: [
-                          BoxShadow(
-                              color: grey.withOpacity(.8),
-                              offset: Offset(3, 2),
-                              blurRadius: 7)
-                        ]),
-                    child: ListView(
-                      controller: myscrollController,
-                      children: [
-                        Icon(
-                          Icons.remove,
-                          size: 40,
-                          color: grey,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16, right: 16, bottom: 16),
-                          child: Container(
-                            color: grey.withOpacity(.3),
-                            child: TextField(
-                              onTap: () async {
-                                Prediction p = await PlacesAutocomplete.show(
-                                    context: context,
-                                    apiKey: GOOGLE_MAPS_API_KEY,
-                                    mode: Mode.overlay, // Mode.fullscreen
-                                    language: "pt",
-                                    components: [
-                                      new Component(Component.country, "mz")
-                                    ]);
-                                PlacesDetailsResponse detail =
-                                    await places.getDetailsByPlaceId(p.placeId);
-                                double lat =
-                                    detail.result.geometry.location.lat;
-                                double lng =
-                                    detail.result.geometry.location.lng;
-                                appState.changeRequestedDestination(
-                                    reqDestination: p.description,
-                                    lat: lat,
-                                    lng: lng);
-                                appState.updateDestination(
-                                    destination: p.description);
-                                LatLng coordinates = LatLng(lat, lng);
-                                appState.setDestination(
-                                    coordinates: coordinates);
-                                appState.addPickupMarker(appState.center);
-                                appState.changeShowPickupLocationWidget();
-                                // appState.sendRequest(coordinates: coordinates);
-                              },
-                              textInputAction: TextInputAction.go,
-                              controller: appState.destinationController,
-                              cursorColor: Colors.blue.shade900,
-                              decoration: InputDecoration(
-                                icon: Container(
-                                  margin: EdgeInsets.only(left: 20, bottom: 15),
-                                  width: 10,
-                                  height: 10,
-                                  child: Icon(
-                                    Icons.location_on,
-                                    color: primary,
-                                  ),
-                                ),
-                                hintText: "Where to go?",
-                                hintStyle: TextStyle(
-                                    color: black,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.all(15),
-                              ),
-                            ),
-                          ),
-                        ),
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.deepOrange[300],
-                            child: Icon(
-                              Icons.home,
-                              color: white,
-                            ),
-                          ),
-                          title: Text("Home"),
-                          subtitle: Text("25th avenue, 23 street"),
-                        ),
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.deepOrange[300],
-                            child: Icon(
-                              Icons.work,
-                              color: white,
-                            ),
-                          ),
-                          title: Text("Work"),
-                          subtitle: Text("25th avenue, 23 street"),
-                        ),
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.grey.withOpacity(0.18),
-                            child: Icon(
-                              Icons.history,
-                              color: primary,
-                            ),
-                          ),
-                          title: Text("Recent location"),
-                          subtitle: Text("25th avenue, 23 street"),
-                        ),
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.grey.withOpacity(.18),
-                            child: Icon(
-                              Icons.history,
-                              color: primary,
-                            ),
-                          ),
-                          title: Text("Recent location"),
-                          subtitle: Text("25th avenue, 23 street"),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
+                visible: appState.show == Show.DESTINATION_SELECTION,
+                child: DestinationSelectionWidget()),
             // ANCHOR PICK UP WIDGET
             Visibility(
-              visible: appState.showConfirmPickUpLocation,
-              child: DraggableScrollableSheet(
-                initialChildSize: 0.28,
-                minChildSize: 0.28,
-                builder: (BuildContext context, myscrollController) {
-                  return Container(
-                    decoration: BoxDecoration(color: white,
-//                        borderRadius: BorderRadius.only(
-//                            topLeft: Radius.circular(20),
-//                            topRight: Radius.circular(20)),
-                        boxShadow: [
-                          BoxShadow(
-                              color: grey.withOpacity(.8),
-                              offset: Offset(3, 2),
-                              blurRadius: 7)
-                        ]),
-                    child: ListView(
-                      controller: myscrollController,
-                      children: [
-                        SizedBox(
-                          height: 12,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CustomText(
-                              text: "Move the pin to adjust pickup location",
-                              size: 12,
-                              weight: FontWeight.w300,
-                            ),
-                          ],
-                        ),
-                        Divider(),
-                        SizedBox(
-                          height: 8,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16, right: 16, bottom: 16),
-                          child: Container(
-                            color: grey.withOpacity(.3),
-                            child: TextField(
-                              onTap: () async {
-                                Prediction p = await PlacesAutocomplete.show(
-                                    context: context,
-                                    apiKey: GOOGLE_MAPS_API_KEY,
-                                    mode: Mode.overlay, // Mode.fullscreen
-                                    language: "pt",
-                                    components: [
-                                      new Component(Component.country, "mz")
-                                    ]);
-                                PlacesDetailsResponse detail =
-                                    await places.getDetailsByPlaceId(p.placeId);
-                                double lat =
-                                    detail.result.geometry.location.lat;
-                                double lng =
-                                    detail.result.geometry.location.lng;
-                                appState.changeRequestedDestination(
-                                    reqDestination: p.description,
-                                    lat: lat,
-                                    lng: lng);
-                                appState.updateDestination(
-                                    destination: p.description);
-                                LatLng coordinates = LatLng(lat, lng);
-                                appState.setPickCoordinates(
-                                    coordinates: coordinates);
-                                appState.changePickupLocationAddress(
-                                    address: p.description);
-                                // appState.sendRequest(coordinates: coordinates);
-                              },
-                              textInputAction: TextInputAction.go,
-                              controller: appState.pickupLocationControlelr,
-                              cursorColor: Colors.blue.shade900,
-                              decoration: InputDecoration(
-                                icon: Container(
-                                  margin: EdgeInsets.only(left: 20, bottom: 15),
-                                  width: 10,
-                                  height: 10,
-                                  child: Icon(
-                                    Icons.location_on,
-                                    color: primary,
-                                  ),
-                                ),
-                                hintText: "Pick up location",
-                                hintStyle: TextStyle(
-                                    color: black,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.all(15),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 15.0,
-                              right: 15.0,
-                            ),
-                            child: RaisedButton(
-                              onPressed: () {
-                                appState.requestDriver(
-                                    distance:
-                                        appState.routeModel.distance.toJson(),
-                                    user: userProvider.userModel,
-                                    lat: appState.position.latitude,
-                                    lng: appState.position.longitude,
-                                    context: context);
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return Dialog(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                20.0)), //this right here
-                                        child: Container(
-                                          height: 200,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(12.0),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                SpinKitWave(
-                                                  color: black,
-                                                  size: 30,
-                                                ),
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    CustomText(
-                                                        text:
-                                                            "Looking for a driver"),
-                                                  ],
-                                                ),
-                                                SizedBox(
-                                                  height: 30,
-                                                ),
-                                                LinearPercentIndicator(
-                                                  lineHeight: 4,
-                                                  animation: true,
-                                                  animationDuration: 100000,
-                                                  percent: 1,
-                                                  backgroundColor: Colors.grey
-                                                      .withOpacity(0.2),
-                                                  progressColor:
-                                                      Colors.deepOrange,
-                                                ),
-                                                SizedBox(
-                                                  height: 20,
-                                                ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    FlatButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                              context);
-                                                          appState
-                                                              .cancelRequest();
-                                                          scaffoldState
-                                                              .currentState
-                                                              .showSnackBar(SnackBar(
-                                                                  content: Text(
-                                                                      "Request cancelled!")));
-                                                        },
-                                                        child: CustomText(
-                                                          text:
-                                                              "Cancel Request",
-                                                          color:
-                                                              Colors.deepOrange,
-                                                        )),
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    });
-                              },
-                              color: black,
-                              child: Text(
-                                "Comfirm Pickup",
-                                style: TextStyle(color: white, fontSize: 16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+              visible: appState.show == Show.PICKUP_SELECTION,
+              child: PickupSelectionWidget(
+                scaffoldState: scaffoldState,
               ),
             ),
+            //  ANCHOR Draggable PAYMENT METHOD
+            Visibility(
+                visible: appState.show == Show.PAYMENT_METHOD_SELECTION,
+                child: PaymentMethodSelectionWidget(
+                  scaffoldState: scaffoldState,
+                )),
+            //  ANCHOR Draggable DRIVER
+            Visibility(
+                visible: appState.show == Show.DRIVER_FOUND,
+                child: DriverFoundWidget())
           ],
         ),
       ),
@@ -466,6 +146,7 @@ class _MapScreenState extends State<MapScreen> {
                 myLocationEnabled: true,
                 mapType: MapType.normal,
                 compassEnabled: true,
+                rotateGesturesEnabled: true,
                 markers: appState.markers,
                 onCameraMove: appState.onCameraMove,
                 polylines: appState.poly,
@@ -521,107 +202,6 @@ class _MapScreenState extends State<MapScreen> {
 //                  ),
 //                ),
 //              ),
-
-              Positioned(
-                bottom: 10,
-                left: 0,
-                right: 0,
-                child: appState.lookingForDriver
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 14),
-                        child: Container(
-                          color: white,
-                          child: ListTile(
-                            title: SpinKitWave(
-                              color: black,
-                              size: 30,
-                            ),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                            color: white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: grey.withOpacity(.5),
-                                  offset: Offset(3, 2),
-                                  blurRadius: 7)
-                            ]),
-                        child: Column(
-                          children: [
-                            // ANCHOR BOTTOM TEXT FIELDS
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Container(
-                                color: grey.withOpacity(.3),
-                                child: TextField(
-                                  onTap: () async {
-                                    Prediction p =
-                                        await PlacesAutocomplete.show(
-                                            context: context,
-                                            apiKey: GOOGLE_MAPS_API_KEY,
-                                            mode:
-                                                Mode.overlay, // Mode.fullscreen
-                                            language: "pt",
-                                            components: [
-                                          new Component(Component.country, "mz")
-                                        ]);
-                                    PlacesDetailsResponse detail = await places
-                                        .getDetailsByPlaceId(p.placeId);
-                                    double lat =
-                                        detail.result.geometry.location.lat;
-                                    double lng =
-                                        detail.result.geometry.location.lng;
-                                    appState.changeRequestedDestination(
-                                        reqDestination: p.description,
-                                        lat: lat,
-                                        lng: lng);
-//                                    LatLng coordinates = LatLng(lat, lng);
-//                                    appState.sendRequest(
-//                                        coordinates: coordinates);
-                                  },
-                                  textInputAction: TextInputAction.go,
-//                          onSubmitted: (value) {
-//                            appState.sendRequest(intendedLocation: value);
-//                          },
-                                  controller: destinationController,
-                                  cursorColor: Colors.blue.shade900,
-                                  decoration: InputDecoration(
-                                    icon: Container(
-                                      margin:
-                                          EdgeInsets.only(left: 20, bottom: 15),
-                                      width: 10,
-                                      height: 10,
-                                      child: Icon(
-                                        Icons.location_on,
-                                        color: primary,
-                                      ),
-                                    ),
-                                    hintText: "Where to go?",
-                                    hintStyle: TextStyle(
-                                        color: black,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.all(15),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(
-                              height: 10,
-                            ),
-
-                            SizedBox(
-                              height: 15,
-                            )
-                          ],
-                        ),
-                      ),
-              ),
             ],
           );
   }

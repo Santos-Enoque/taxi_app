@@ -20,7 +20,14 @@ import 'package:txapita/widgets/custom_text.dart';
 import 'package:txapita/widgets/stars.dart';
 import 'package:uuid/uuid.dart';
 
-enum RequestStatus { pending, accepted, cancelled, expired }
+// * THIS ENUM WILL CONTAIN THE DRAGGABLE WIDGET TO BE DISPLAYED ON THE MAIN SCREEN
+enum Show {
+  DESTINATION_SELECTION,
+  PICKUP_SELECTION,
+  PAYMENT_METHOD_SELECTION,
+  DRIVER_FOUND,
+  RIDE_STARTED
+}
 
 class AppStateProvider with ChangeNotifier {
   static const ACCEPTED = 'accepted';
@@ -31,7 +38,13 @@ class AppStateProvider with ChangeNotifier {
   static const LOCATION_MARKER_ID = 'location';
 
   Set<Marker> _markers = {};
+  //  this polys will be displayed on the map
   Set<Polyline> _poly = {};
+  // this polys temporarely store the polys to destination
+  Set<Polyline> _routeToDestinationPolys = {};
+  // this polys temporarely store the polys to driver
+  Set<Polyline> _routeToDriverpoly = {};
+
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
   GoogleMapController _mapController;
   Geoflutterfire geo = Geoflutterfire();
@@ -41,6 +54,8 @@ class AppStateProvider with ChangeNotifier {
   TextEditingController destinationController = TextEditingController();
   Position position;
   DriverService _driverService = DriverService();
+  //  draggable to show
+  Show show = Show.DESTINATION_SELECTION;
 
   //   taxi pin
   BitmapDescriptor carPin;
@@ -62,7 +77,7 @@ class AppStateProvider with ChangeNotifier {
   //  Driver request related variables
   bool lookingForDriver = false;
   bool alertsOnUi = false;
-  bool showConfirmPickUpLocation = false;
+  bool driverFound = false;
   RideRequestServices _requestServices = RideRequestServices();
   int timeCounter = 0;
   double percentage = 0;
@@ -75,7 +90,11 @@ class AppStateProvider with ChangeNotifier {
   double requestedDestinationLng;
   RideRequestModel rideRequestModel;
 
+//  this variable will listen to the status of the ride request
   StreamSubscription<QuerySnapshot> requestStream;
+  // this variable will keep track of the drivers position before and during the ride
+  StreamSubscription<QuerySnapshot> driverPositionStream;
+
   DriverModel driverModel;
   LatLng pickupCoordinates;
   LatLng destinationCoordinates;
@@ -97,9 +116,16 @@ class AppStateProvider with ChangeNotifier {
 
 // ANCHOR: MAPS & LOCATION METHODS
   Future<Position> _getUserLocation() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     position = await Geolocator().getCurrentPosition();
-    // List<Placemark> placemark = await Geolocator()
-    //     .placemarkFromCoordinates(position.latitude, position.longitude);
+    List<Placemark> placemark = await Geolocator()
+        .placemarkFromCoordinates(position.latitude, position.longitude);
+
+    if (prefs.getString(COUNTRY) == null) {
+      String country = placemark[0].isoCountryCode.toLowerCase();
+      await prefs.setString(COUNTRY, country);
+    }
+
     _center = LatLng(position.latitude, position.longitude);
     notifyListeners();
     return position;
@@ -116,29 +142,42 @@ class AppStateProvider with ChangeNotifier {
   }
 
   onCameraMove(CameraPosition position) {
-    _lastPosition = position.target;
-    changePickupLocationAddress(address: "loading...");
-    if (_markers.isNotEmpty) {
-      _markers.forEach((element) async {
-        if (element.markerId.value == PICKUP_MARKER_ID) {
-          _markers.remove(element);
-          addPickupMarker(position.target);
-          List<Placemark> placemark = await Geolocator()
-              .placemarkFromCoordinates(
-                  position.target.latitude, position.target.longitude);
-          pickupLocationControlelr.text = placemark[0].name;
-          notifyListeners();
-        }
-      });
+    //  MOVE the pickup marker only when selecting the pickup location
+    if (show == Show.PICKUP_SELECTION) {
+      _lastPosition = position.target;
+      changePickupLocationAddress(address: "loading...");
+      if (_markers.isNotEmpty) {
+        _markers.forEach((element) async {
+          if (element.markerId.value == PICKUP_MARKER_ID) {
+            _markers.remove(element);
+            pickupCoordinates = position.target;
+            addPickupMarker(position.target);
+            List<Placemark> placemark = await Geolocator()
+                .placemarkFromCoordinates(
+                    position.target.latitude, position.target.longitude);
+            pickupLocationControlelr.text = placemark[0].name;
+            notifyListeners();
+          }
+        });
+      }
+      notifyListeners();
     }
-    notifyListeners();
   }
 
-  void sendRequest({String intendedLocation, LatLng coordinates}) async {
-    LatLng destination = coordinates;
-    LatLng origin = LatLng(position.latitude, position.longitude);
+  Future sendRequest({LatLng origin, LatLng destination}) async {
+    LatLng _org;
+    LatLng _dest;
+
+    if (origin == null && destination == null) {
+      _org = pickupCoordinates;
+      _dest = destinationCoordinates;
+    } else {
+      _org = origin;
+      _dest = destination;
+    }
+
     RouteModel route =
-        await _googleMapsServices.getRouteByCoordinates(origin, destination);
+        await _googleMapsServices.getRouteByCoordinates(_org, _dest);
     routeModel = route;
     List<Marker> mks = _markers
         .where((element) => element.markerId.value == "location")
@@ -146,11 +185,11 @@ class AppStateProvider with ChangeNotifier {
     if (mks.length >= 1) {
       _markers.remove(mks[0]);
     }
-
-    _addLocationMarker(destination, routeModel.distance.text);
-    _center = destination;
-
+// ! another method will be created just to draw the polys and add markers
+    _addLocationMarker(destinationCoordinates, routeModel.distance.text);
+    _center = destinationCoordinates;
     _createRoute(route.points);
+    _routeToDestinationPolys = _poly;
     notifyListeners();
   }
 
@@ -159,11 +198,11 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _createRoute(String decodeRoute) {
+  _createRoute(String decodeRoute) {
     clearPoly();
     var uuid = new Uuid();
     String polyId = uuid.v1();
-    poly.add(Polyline(
+    _poly.add(Polyline(
         polylineId: PolylineId(polyId),
         width: 12,
         color: primary,
@@ -229,9 +268,9 @@ class AppStateProvider with ChangeNotifier {
   }
 
   addPickupMarker(LatLng position) {
-    // if (pickupLocationControlelr.text == null) {
-    //   ad
-    // }
+    if (pickupCoordinates == null) {
+      pickupCoordinates = position;
+    }
     _markers.add(Marker(
         markerId: MarkerId(PICKUP_MARKER_ID),
         position: position,
@@ -294,8 +333,8 @@ class AppStateProvider with ChangeNotifier {
   }
 
 // ANCHOR UI METHODS
-  changeShowPickupLocationWidget() {
-    showConfirmPickUpLocation = !showConfirmPickUpLocation;
+  changeWidgetShowed({Show showWidget}) {
+    show = showWidget;
     notifyListeners();
   }
 
@@ -471,10 +510,19 @@ class AppStateProvider with ChangeNotifier {
               break;
             case ACCEPTED:
               print("====== ACCEPTED");
+              if (lookingForDriver) Navigator.pop(context);
+              lookingForDriver = false;
               driverModel = await _driverService
                   .getDriverById(doc.document.data['driverId']);
               periodicTimer.cancel();
-              showDriverBottomSheet(context);
+              clearPoly();
+              sendRequest(
+                  origin: pickupCoordinates,
+                  destination: LatLng(
+                      driverModel.position.lat, driverModel.position.lng));
+              show = Show.DRIVER_FOUND;
+              notifyListeners();
+              // showDriverBottomSheet(context);
               break;
             case EXPIRED:
               print("====== EXPIRED");
@@ -562,7 +610,9 @@ class AppStateProvider with ChangeNotifier {
 
   changePickupLocationAddress({String address}) {
     pickupLocationControlelr.text = address;
-    _center = pickupCoordinates;
+    if (pickupCoordinates != null) {
+      _center = pickupCoordinates;
+    }
     notifyListeners();
   }
 
