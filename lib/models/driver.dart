@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class DriverModel {
   static const ID = "id";
@@ -51,6 +52,10 @@ class DriverModel {
         lat: snapshot.data[POSITION][LATITUDE],
         lng: snapshot.data[POSITION][LONGITUDE],
         heading: snapshot.data[POSITION][HEADING]);
+  }
+
+  LatLng getPosition() {
+    return LatLng(_position.lat, _position.lng);
   }
 }
 

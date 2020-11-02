@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:txapita/helpers/constants.dart';
 import 'package:txapita/models/driver.dart';
 
@@ -13,4 +14,9 @@ class DriverService {
       firebaseFiretore.collection(collection).document(id).get().then((doc) {
         return DriverModel.fromSnapshot(doc);
       });
+
+  Stream<QuerySnapshot> driverStream() {
+    CollectionReference reference = Firestore.instance.collection(collection);
+    return reference.snapshots();
+  }
 }

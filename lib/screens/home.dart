@@ -80,6 +80,31 @@ class _MyHomePageState extends State<MyHomePage> {
         body: Stack(
           children: [
             MapScreen(scaffoldState),
+            Visibility(
+              visible: appState.show == Show.DRIVER_FOUND,
+              child: Positioned(
+                  top: 60,
+                  left: 15,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          color: primary,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: CustomText(
+                              text: "Meet driver at the pick up location",
+                              weight: FontWeight.w300,
+                              color: white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ),
             // ANCHOR Draggable
             Visibility(
                 visible: appState.show == Show.DESTINATION_SELECTION,
@@ -100,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
             //  ANCHOR Draggable DRIVER
             Visibility(
                 visible: appState.show == Show.DRIVER_FOUND,
-                child: DriverFoundWidget())
+                child: DriverFoundWidget()),
           ],
         ),
       ),
