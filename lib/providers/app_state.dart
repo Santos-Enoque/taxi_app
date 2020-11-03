@@ -78,6 +78,7 @@ class AppStateProvider with ChangeNotifier {
   bool lookingForDriver = false;
   bool alertsOnUi = false;
   bool driverFound = false;
+  bool driverArrived = false;
   RideRequestServices _requestServices = RideRequestServices();
   int timeCounter = 0;
   double percentage = 0;
@@ -627,7 +628,11 @@ class AppStateProvider with ChangeNotifier {
           sendRequest(
               origin: pickupCoordinates,
               destination: driverModel.getPosition());
+              if(routeModel.distance.value <= 200){
+                driverArrived = true;
+              }
           notifyListeners();
+
           _addDriverMarker(
               position: driverModel.getPosition(),
               rotation: driverModel.position.heading,

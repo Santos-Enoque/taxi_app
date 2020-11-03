@@ -3,10 +3,13 @@ import 'package:txapita/providers/app_state.dart';
 import 'package:txapita/providers/user.dart';
 import 'package:txapita/screens/login.dart';
 import 'package:txapita/screens/splash.dart';
+import 'locators/service_locator.dart';
 import 'screens/home.dart';
 import 'package:provider/provider.dart';
-void main(){
+
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  setupLocator();
   return runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<AppStateProvider>.value(
@@ -44,5 +47,3 @@ class MyApp extends StatelessWidget {
     }
   }
 }
-
-

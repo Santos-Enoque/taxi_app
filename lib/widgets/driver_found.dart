@@ -7,12 +7,17 @@ import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:txapita/helpers/constants.dart';
 import 'package:txapita/helpers/style.dart';
+import 'package:txapita/locators/service_locator.dart';
 import 'package:txapita/providers/app_state.dart';
 import 'package:txapita/providers/user.dart';
+import 'package:txapita/services/call_sms.dart';
 
+import '../helpers/style.dart';
 import 'custom_text.dart';
 
 class DriverFoundWidget extends StatelessWidget {
+  final CallsAndMessagesService _service = locator<CallsAndMessagesService>();
+
   @override
   Widget build(BuildContext context) {
     AppStateProvider appState = Provider.of<AppStateProvider>(context);
@@ -42,19 +47,32 @@ class DriverFoundWidget extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CustomText(
-                      text:
-                          'Your ride arrives in ${appState.routeModel.timeNeeded.text}',
-                      size: 12,
-                      weight: FontWeight.w300,
+                    Container(
+                      child: appState.driverArrived == false ? CustomText(
+                        text:
+                            'Your ride arrives in ${appState.routeModel.timeNeeded.text}',
+                        size: 12,
+                        weight: FontWeight.w300,
+                      ) : CustomText(
+                        text:
+                        'Your ride has arrived',
+                        size: 12,
+                        color: green,
+                        weight: FontWeight.w500,
+                      )
                     ),
                   ],
                 ),
                 Divider(),
                 ListTile(
-                  leading: CircleAvatar(
-                    radius: 30,
-                    backgroundImage: NetworkImage(appState.driverModel?.photo),
+                  leading: Container(
+                    child:appState.driverModel?.phone  == null ? CircleAvatar(
+                      radius: 30,
+                      child: Icon(Icons.person_outline, size: 25,),
+                    ) : CircleAvatar(
+                      radius: 30,
+                      backgroundImage: NetworkImage(appState.driverModel?.photo),
+                    ),
                   ),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -84,7 +102,9 @@ class DriverFoundWidget extends StatelessWidget {
                           color: Colors.green.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(20)),
                       child: IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          _service.call(appState.driverModel.phone);
+                        },
                         icon: Icon(Icons.call),
                       )),
                 ),

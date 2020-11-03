@@ -20,6 +20,9 @@ import 'package:txapita/widgets/loading.dart';
 import 'package:txapita/widgets/payment_method_selection.dart';
 import 'package:txapita/widgets/pickup_selection_widget.dart';
 
+import '../helpers/style.dart';
+import '../helpers/style.dart';
+import '../helpers/style.dart';
 import 'login.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -91,13 +94,24 @@ class _MyHomePageState extends State<MyHomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          color: primary,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: CustomText(
-                              text: "Meet driver at the pick up location",
-                              weight: FontWeight.w300,
-                              color: white,
+                          child: appState.driverArrived ? Container(
+                            color: green,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: CustomText(
+                                text: "Meet driver at the pick up location",
+                                color: Colors.white,
+                              ),
+                            ),
+                          ) : Container(
+                            color: primary,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: CustomText(
+                                text: "Meet driver at the pick up location",
+                                weight: FontWeight.w300,
+                                color: white,
+                              ),
                             ),
                           ),
                         ),
