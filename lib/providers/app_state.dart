@@ -26,7 +26,7 @@ enum Show {
   PICKUP_SELECTION,
   PAYMENT_METHOD_SELECTION,
   DRIVER_FOUND,
-  RIDE_STARTED
+  TRIP
 }
 
 class AppStateProvider with ChangeNotifier {
@@ -36,6 +36,12 @@ class AppStateProvider with ChangeNotifier {
   static const EXPIRED = 'expired';
   static const PICKUP_MARKER_ID = 'pickup';
   static const LOCATION_MARKER_ID = 'location';
+  static const DRIVER_AT_LOCATION_NOTIFICATION = 'DRIVER_AT_LOCATION';
+  static const REQUEST_ACCEPTED_NOTIFICATION = 'REQUEST_ACCEPTED';
+  static const TRIP_STARTED_NOTIFICATION = 'TRIP_STARTED';
+
+
+
 
   Set<Marker> _markers = {};
   //  this polys will be displayed on the map
@@ -103,6 +109,7 @@ class AppStateProvider with ChangeNotifier {
   LatLng pickupCoordinates;
   LatLng destinationCoordinates;
   double ridePrice = 0;
+  String notificationType = "";
 
   AppStateProvider() {
     _saveDeviceToken();
@@ -601,6 +608,7 @@ class AppStateProvider with ChangeNotifier {
     listenToRequest(id: id, context: context);
     percentageCounter(requestId: id, context: context);
   }
+  
 
   cancelRequest() {
     lookingForDriver = false;
@@ -698,10 +706,29 @@ class AppStateProvider with ChangeNotifier {
   // ANCHOR PUSH NOTIFICATION METHODS
   Future handleOnMessage(Map<String, dynamic> data) async {
     print("=== data = ${data.toString()}");
+    notificationType = data['data']['type'];
+
+    if(notificationType == DRIVER_AT_LOCATION_NOTIFICATION){
+
+    }else if(notificationType == TRIP_STARTED_NOTIFICATION){
+      show = Show.TRIP;
+      sendRequest(origin: pickupCoordinates, destination: destinationCoordinates);
+      notifyListeners();
+    }else if(notificationType == REQUEST_ACCEPTED_NOTIFICATION){
+
+    }
     notifyListeners();
   }
 
   Future handleOnLaunch(Map<String, dynamic> data) async {
+    notificationType = data['data']['type'];
+    if(notificationType == DRIVER_AT_LOCATION_NOTIFICATION){
+
+    }else if(notificationType == TRIP_STARTED_NOTIFICATION){
+
+    }else if(notificationType == REQUEST_ACCEPTED_NOTIFICATION){
+
+    }
     driverModel = await _driverService.getDriverById(data['data']['driverId']);
     _stopListeningToDriversStream();
 
@@ -710,7 +737,16 @@ class AppStateProvider with ChangeNotifier {
   }
 
   Future handleOnResume(Map<String, dynamic> data) async {
+    notificationType = data['data']['type'];
+
     _stopListeningToDriversStream();
+    if(notificationType == DRIVER_AT_LOCATION_NOTIFICATION){
+
+    }else if(notificationType == TRIP_STARTED_NOTIFICATION){
+
+    }else if(notificationType == REQUEST_ACCEPTED_NOTIFICATION){
+
+    }
 
     if (lookingForDriver) Navigator.pop(mainContext);
     lookingForDriver = false;

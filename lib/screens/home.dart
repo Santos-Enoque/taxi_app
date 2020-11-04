@@ -19,6 +19,7 @@ import 'package:txapita/widgets/driver_found.dart';
 import 'package:txapita/widgets/loading.dart';
 import 'package:txapita/widgets/payment_method_selection.dart';
 import 'package:txapita/widgets/pickup_selection_widget.dart';
+import 'package:txapita/widgets/trip_draggable.dart';
 
 import '../helpers/style.dart';
 import '../helpers/style.dart';
@@ -119,6 +120,40 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   )),
             ),
+            Visibility(
+              visible: appState.show == Show.TRIP,
+              child: Positioned(
+                  top: 60,
+                  left: MediaQuery.of(context).size.width / 7,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          child: Container(
+                            color: primary,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: RichText(text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: "You\'ll reach your desiation in \n",
+                                    style: TextStyle(fontWeight: FontWeight.w300)
+                                  ),
+                                  TextSpan(
+                                      text: appState.routeModel?.timeNeeded?.text ?? "",
+                                      style: TextStyle(fontSize: 22)
+                                  ),
+                                ]
+                              ))
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ),
             // ANCHOR Draggable
             Visibility(
                 visible: appState.show == Show.DESTINATION_SELECTION,
@@ -140,6 +175,11 @@ class _MyHomePageState extends State<MyHomePage> {
             Visibility(
                 visible: appState.show == Show.DRIVER_FOUND,
                 child: DriverFoundWidget()),
+
+            //  ANCHOR Draggable DRIVER
+            Visibility(
+                visible: appState.show == Show.TRIP,
+                child: TripWidget()),
           ],
         ),
       ),
