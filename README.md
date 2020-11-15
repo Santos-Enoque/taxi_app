@@ -1,5 +1,5 @@
 # Flutter Uber Clone / Taxi App
-![](iamges/thumb.jpg)
+![](images/thumb.jpg)
 A new Flutter application.
 
 ## Getting Started
