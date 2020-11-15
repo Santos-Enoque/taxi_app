@@ -1,16 +1,11 @@
 # Flutter Uber Clone / Taxi App
 ![](images/thumb.jpg)
-A new Flutter application.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Get the apk for this project at this [link](https://flutter.io/docs/get-started/codelab)
 
-A few resources to get you started if this is your first Flutter project:
+There are mainly two aspects to consider in order to have this project working:
+1. Don't forget to add your own google maps api into the androidmanifest.xml file
+2. This is not requered but you can conect the project to your firebase project by chamging the google-services.json file
 
-- [Lab: Write your first Flutter app](https://flutter.io/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.io/docs/cookbook)
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.io/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
