@@ -124,9 +124,15 @@ class AppStateProvider with ChangeNotifier {
     _setCustomMapPin();
     _getUserLocation();
     _listemToDrivers();
+    Geolocator().getPositionStream().listen(_updatePosition);
+
   }
 
 // ANCHOR: MAPS & LOCATION METHODS
+  _updatePosition(Position newPosition){
+    position = newPosition;
+    notifyListeners();
+  }
   Future<Position> _getUserLocation() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     position = await Geolocator().getCurrentPosition();

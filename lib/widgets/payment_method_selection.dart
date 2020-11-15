@@ -111,8 +111,8 @@ class PaymentMethodSelectionWidget extends StatelessWidget {
                                   distance:
                                       appState.routeModel.distance.toJson(),
                                   user: userProvider.userModel,
-                                  lat: appState.position.latitude,
-                                  lng: appState.position.longitude,
+                                  lat: appState.pickupCoordinates.latitude,
+                                  lng: appState.pickupCoordinates.longitude,
                                   context: context);
                               appState.changeMainContext(context);
 
