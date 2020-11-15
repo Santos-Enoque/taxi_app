@@ -45,8 +45,7 @@ class PaymentMethodSelectionWidget extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: CustomText(
-                    text:
-                        "How do you want to pay,\n\$${(appState.routeModel.distance.value / 500).toStringAsFixed(2)}",
+                    text: "How do you want to pay,\n\$${appState.ridePrice}",
                     size: 24,
                     weight: FontWeight.bold,
                   ),
@@ -112,9 +111,10 @@ class PaymentMethodSelectionWidget extends StatelessWidget {
                                   distance:
                                       appState.routeModel.distance.toJson(),
                                   user: userProvider.userModel,
-                                  lat: appState.position.latitude,
-                                  lng: appState.position.longitude,
+                                  lat: appState.pickupCoordinates.latitude,
+                                  lng: appState.pickupCoordinates.longitude,
                                   context: context);
+                              appState.changeMainContext(context);
 
                               showDialog(
                                   context: context,

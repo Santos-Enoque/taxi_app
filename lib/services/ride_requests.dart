@@ -31,7 +31,7 @@ class RideRequestServices {
         .updateData(values);
   }
 
-  Stream<QuerySnapshot> requestStream({String id}) {
+  Stream<QuerySnapshot> requestStream() {
     CollectionReference reference = Firestore.instance.collection(collection);
     return reference.snapshots();
   }

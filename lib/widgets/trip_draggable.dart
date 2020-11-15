@@ -13,9 +13,11 @@ import 'package:txapita/providers/user.dart';
 import 'package:txapita/services/call_sms.dart';
 
 import '../helpers/style.dart';
+import '../helpers/style.dart';
+import '../helpers/style.dart';
 import 'custom_text.dart';
 
-class DriverFoundWidget extends StatelessWidget {
+class TripWidget extends StatelessWidget {
   final CallsAndMessagesService _service = locator<CallsAndMessagesService>();
 
   @override
@@ -48,18 +50,12 @@ class DriverFoundWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      child: appState.driverArrived == false ? CustomText(
-                        text:
-                            'Your ride arrives in ${appState.routeModel.timeNeeded.text}',
-                        size: 12,
-                        weight: FontWeight.w300,
-                      ) : CustomText(
-                        text:
-                        'Your ride has arrived',
-                        size: 12,
-                        color: green,
-                        weight: FontWeight.w500,
-                      )
+                        child:  CustomText(
+                          text:
+                          'ON TRIP',
+                          weight: FontWeight.bold,
+                          color: green,
+                        )
                     ),
                   ],
                 ),
@@ -79,33 +75,32 @@ class DriverFoundWidget extends StatelessWidget {
                     children: [
                       RichText(
                           text: TextSpan(children: [
-                        TextSpan(
-                            text: appState.driverModel.name + "\n",
-                            style: TextStyle(
-                                fontSize: 17, fontWeight: FontWeight.bold)),
-                        TextSpan(
-                            text: appState.driverModel.car,
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w300)),
-                      ], style: TextStyle(color: black))),
+                            TextSpan(
+                                text: appState.driverModel.name + "\n",
+                                style: TextStyle(
+                                    fontSize: 17, fontWeight: FontWeight.bold)),
+                            TextSpan(
+                                text: appState.driverModel.car,
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w300)),
+                          ], style: TextStyle(color: black))),
                     ],
                   ),
-                  subtitle: RaisedButton(
-                      color: Colors.grey.withOpacity(0.5),
-                      onPressed: null,
-                      child: CustomText(
-                        text: appState.driverModel.plate,
-                        color: white,
-                      )),
+//                  subtitle: RaisedButton(
+//                      color: Colors.white.withOpacity(.9),
+//                      onPressed: (){},
+//                      child: CustomText(
+//                        text: "End Trip",
+//                        color: red,
+//                      )),
                   trailing: Container(
                       decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(20)),
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(30)),
                       child: IconButton(
                         onPressed: () {
-                          _service.call(appState.driverModel.phone);
                         },
-                        icon: Icon(Icons.call),
+                        icon: Icon(Icons.info, color: white,),
                       )),
                 ),
                 Divider(),
@@ -148,23 +143,23 @@ class DriverFoundWidget extends StatelessWidget {
                     ),
                     RichText(
                         text: TextSpan(children: [
-                      TextSpan(
-                          text: "\nPick up location \n",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      TextSpan(
-                          text: "25th avenue, flutter street \n\n\n",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w300, fontSize: 16)),
-                      TextSpan(
-                          text: "Destination \n",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      TextSpan(
-                          text: "25th avenue, flutter street \n",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w300, fontSize: 16)),
-                    ], style: TextStyle(color: black))),
+                          TextSpan(
+                              text: "\nPick up location \n",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          TextSpan(
+                              text: "25th avenue, flutter street \n\n\n",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w300, fontSize: 16)),
+                          TextSpan(
+                              text: "Destination \n",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          TextSpan(
+                              text: "25th avenue, flutter street \n",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w300, fontSize: 16)),
+                        ], style: TextStyle(color: black))),
                   ],
                 ),
                 Divider(),
@@ -195,7 +190,7 @@ class DriverFoundWidget extends StatelessWidget {
                     onPressed: () {},
                     color: red,
                     child: CustomText(
-                      text: "Cancel Ride",
+                      text: "END MY TRIP",
                       color: white,
                     ),
                   ),
